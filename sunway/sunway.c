@@ -3,10 +3,6 @@
 //
 #include <stdio.h>
 
-extern "C" {
-#include <athread.h>
-}
-
 void sunwayAThreadInit() {
     athread_init();
     int i;
