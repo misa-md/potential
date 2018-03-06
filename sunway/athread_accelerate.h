@@ -16,6 +16,7 @@ extern "C" void SLAVE_FUN(cal_rho2)(double *);
 extern "C" void SLAVE_FUN(cal_df)(double *);
 extern "C" void SLAVE_FUN(cal_force1)(double *);
 extern "C" void SLAVE_FUN(cal_force2)(double *);
+extern "C" void SLAVE_FUN(cal_force3)(double *);
 extern "C" void SLAVE_FUN(init_spline)(double **);
 
 inline void athreadAccelerateInit(int &lolocalx, int &lolocaly, int &lolocalz,

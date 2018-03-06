@@ -44,10 +44,10 @@ void athreadAccelerateEamRhoCalc(int *rho_n, double *x, double *rho, double *cut
     func[3] = reinterpret_cast<double *>(rho_n); // todo int to double.
     func[4] = rhoInvDx;
     func[5] = rhoSplineValues;
-    printf("rho1\n");
+//    printf("rho1\n");
     __real_athread_spawn((void *) slave_cal_rho1, func);
     athread_join();
-    printf("rho2\n");
+//    printf("rho2\n");
     __real_athread_spawn((void *) slave_cal_rho2, func);
     athread_join();
 }
@@ -83,5 +83,7 @@ void athreadAccelerateEamForceCalc(int *phi_n, double *x, double *f, double *df,
     __real_athread_spawn((void *) slave_cal_force1, func3);
     athread_join();
     __real_athread_spawn((void *) slave_cal_force2, func3);
+    athread_join();
+    __real_athread_spawn((void*)slave_cal_force3,func3);
     athread_join();
 }

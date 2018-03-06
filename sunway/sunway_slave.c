@@ -1,7 +1,3 @@
-/*
- * those runs on sunway SW26010 architecture, with its slave core.
- * For accelerating calculate.
- */
 #include "slave.h"
 #include <math.h>
 #include <time.h>
@@ -15,6 +11,7 @@ __thread_local int nlocalx, nlocaly, nlocalz;
 __thread_local int nghostx, nghosty;
 __thread_local int NeighborOffset[68];
 __thread_local double (*rho_spline)[7], (*f_spline)[7], (*phi_spline)[7];
+__thread_local double *_spline_;
 
 #define max(x, y) (x>y?x:y)
 #define min(x, y) (x>y?y:x)
@@ -33,6 +30,7 @@ void calculateNeighbourIndices();
 
 void init(int *a) {
     int i, j, block_size;
+    _spline_ = (double *) ldm_malloc(sizeof(double) * (5000));
     my_id = get_row() * 8 + get_col();
     xstart = a[0];
     ystart = a[1];
@@ -119,19 +117,21 @@ void cal_rho1(double *a[]) {
     double xtemp, ytemp, ztemp;
     double delx, dely, delz;
     int n;
-    double *x, *rho, (*spline)[7];
+    double *x, *rho, (*spline)[7], *spline_mem;
+    double *value;
     double _spline[4];
     int rho_n;
     double invDx;
     double dist2, r, p, rhoTmp;
     int m;
-    double *_x, *_rho;
+    double _x[16 * 15 * 3], _rho[16 * 15];
     int m_step, x_end;
     int n_block;
+    int next;
     unsigned long start, stop;
     //printf("space:%d \n", get_allocatable_size());
-    _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
-    _rho = (double *) ldm_malloc(sizeof(double) * (16 * 15));
+    //_x = (double*)ldm_malloc(sizeof(double)*(16*15*3));
+    //_rho = (double*)ldm_malloc(sizeof(double)*(16*15));
     //_spline = (double*)ldm_malloc(sizeof(double)*4);
 
     x = a[0];
@@ -139,13 +139,18 @@ void cal_rho1(double *a[]) {
     cutoffRadius = *a[2];
     rho_n = *a[3];
     invDx = *a[4];
+    value = a[5];
     subindex_z = (my_id * 2) % Nvalue;
     spline = rho_spline;
+    spline_mem = spline + 7;
     zOmp_start = BeginOfArea(nlocalz, zstart, subindex_z);
     zOmp_end = EndOfArea(nlocalz, zstart, subindex_z);
     m_step = 0;
     n_block = (nlocalx % 8) ? (nlocalx / 8 + 1) : (nlocalx / 8);
 
+    reply = 0;
+    athread_get(PE_MODE, &value[0], &_spline_[0], 5000 * 8, &reply, 0, 0, 0);
+    while (reply != 1);
     //if(my_id == 0){
     //	printf("%d, %d, %d, %d, %d\n", ystart, nlocaly+ystart, n_block, zOmp_start, zOmp_end);
     //}
@@ -182,7 +187,7 @@ void cal_rho1(double *a[]) {
                     ztemp = _x[kk * 3 + 2];
                     //if(my_id == 0)
                     //if(m_step ==(n_block-1)&&i ==x_end-1)
-                    //if(j==ystart+1&&m_step==0&&i == 3)
+                    //if(j==ystart+1&&m_step==0&&i == x_end-1)
                     //printf("x;%d, %lf, %lf, %lf, %lf\n",kk, _rho[kk], xtemp, ytemp, ztemp);
                     if (xtemp != -100) {
                         for (l = 0; l < 68; l++) {
@@ -207,11 +212,18 @@ void cal_rho1(double *a[]) {
                                 //reply = 0;
                                 //asm volatile ("memb");
                                 //athread_get(PE_MODE, &spline[m][3], &_spline[0], 4*8, &reply, 0, 0, 0);
-                                reply = 0;
-                                athread_get(PE_MODE, &spline[m][3], &_spline[0], 4 * 8, &reply, 0, 0, 0);
                                 p -= m;
                                 p = min(p, 1.0);
-                                while (reply != 1);
+                                //while(reply!=1);
+                                _spline[3] = _spline_[m];
+                                _spline[2] = ((_spline_[m - 2] - _spline_[m + 2]) +
+                                              8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0;
+                                _spline[1] = 3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * _spline[2] -
+                                             ((_spline_[m - 1] - _spline_[m + 3]) +
+                                              8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0;
+                                _spline[0] = _spline[2] + ((_spline_[m - 1] - _spline_[m + 3]) +
+                                                           8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0 -
+                                             2.0 * (_spline_[m + 1] - _spline_[m]);
                                 //rtc(&stop);
                                 rhoTmp = ((_spline[0] * p + _spline[1]) * p + _spline[2]) * p + _spline[3];
                                 //printf("tmp:%lf\n", rhoTmp);
@@ -220,9 +232,8 @@ void cal_rho1(double *a[]) {
                                 _rho[kk] += rhoTmp;
                                 _rho[n] += rhoTmp;
                                 //if(m_step ==(n_block-1)&&i ==x_end-1)
-                                //if(j==ystart+1&&m_step==0&&i == 3)
                                 //if(j==ystart+1&&m_step==0&&i == x_end-1)
-                                //	printf("nei:%d, %lf, %lf, %lf, %lf, %lf\n", n, _x[n*3], _x[n*3+1], _x[n*3+2], rhoTmp, _rho[kk]);
+                                //	printf("nei:%d, %lf, %lf, %lf\n", n, _x[n*3], _x[n*3+1], _x[n*3+2]);
                                 //rtc(&stop);
                                 //if(my_id == 0)
                                 //printf("r:%d\n", stop-start);
@@ -232,7 +243,6 @@ void cal_rho1(double *a[]) {
                     }
                     //if(m_step ==(n_block-1)&&i ==x_end-1)
                     //if(j==ystart+1&&m_step==0&&i == x_end-1)
-                    //if(j==ystart+1&&m_step==0&&i == 3)
                     //printf("rho:%lf\n", _rho[kk]);
                     kk++;
                 }
@@ -248,8 +258,8 @@ void cal_rho1(double *a[]) {
         }
     }
     //printf("a");
-    ldm_free(_x, sizeof(double) * (16 * 15 * 3));
-    ldm_free(_rho, sizeof(double) * (16 * 15));
+    //ldm_free(_x, sizeof(double)*(16*15*3));
+    //ldm_free(_rho, sizeof(double)*(16*15));
     //ldm_free(_spline, sizeof(double)*4);
 }
 
@@ -266,14 +276,14 @@ void cal_rho2(double *a[]) {
     int m;
     double dist2, r, p, rhoTmp;
     double _spline[4];
-    double *_x, *_rho;
+    double _x[16 * 15 * 3], _rho[16 * 15];
     int m_step, x_end;
     int n_block;
     int next;
     //if(my_id == 0)
     //	printf("s\n");
-    _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
-    _rho = (double *) ldm_malloc(sizeof(double) * (16 * 15));
+    //_x = (double*)ldm_malloc(sizeof(double)*(16*15*3));
+    //_rho = (double*)ldm_malloc(sizeof(double)*(16*15));
     //_spline = (double*)ldm_malloc(sizeof(double)*4);
     //if(my_id == 0)
     //	printf("space:%d \n", get_allocatable_size());
@@ -337,13 +347,22 @@ void cal_rho2(double *a[]) {
                                 p = r * invDx + 1.0;
                                 m = (int) p;
                                 m = max(1, min(m, (rho_n - 1)));
-                                reply = 0;
+                                //reply = 0;
                                 //asm volatile ("memb");
                                 //spline_mem = spline+m*7+3;
-                                athread_get(PE_MODE, &spline[m][3], &_spline[0], 4 * 8, &reply, 0, 0, 0);
+                                //athread_get(PE_MODE, &spline[m][3], &_spline[0], 4*8, &reply, 0, 0, 0);
                                 p -= m;
                                 p = min(p, 1.0);
-                                while (reply != 1);
+                                //while(reply!=1);
+                                _spline[3] = _spline_[m];
+                                _spline[2] = ((_spline_[m - 2] - _spline_[m + 2]) +
+                                              8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0;
+                                _spline[1] = 3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * _spline[2] -
+                                             ((_spline_[m - 1] - _spline_[m + 3]) +
+                                              8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0;
+                                _spline[0] = _spline[2] + ((_spline_[m - 1] - _spline_[m + 3]) +
+                                                           8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0 -
+                                             2.0 * (_spline_[m + 1] - _spline_[m]);
                                 rhoTmp = ((_spline[0] * p + _spline[1]) * p + _spline[2]) * p + _spline[3];
                                 _rho[kk] += rhoTmp;
                                 _rho[n] += rhoTmp;
@@ -367,8 +386,8 @@ void cal_rho2(double *a[]) {
     }
     //printf("b");
     //athread_syn(ARRAY_SCOPE, 0xffff);
-    ldm_free(_x, sizeof(double) * (16 * 15 * 3));
-    ldm_free(_rho, sizeof(double) * (16 * 15));
+    //ldm_free(_x, sizeof(double)*(16*15*3));
+    //ldm_free(_rho, sizeof(double)*(16*15));
     //ldm_free(_spline, sizeof(double)*4);
 }
 
@@ -377,6 +396,7 @@ void cal_df(double *a[]) {
     int i, j, k, kk;
     double cutoffRadius;
     double *rho, *df, (*spline)[7];
+    double *value;
     int df_n;
     double invDx;
     int m;
@@ -396,10 +416,14 @@ void cal_df(double *a[]) {
     cutoffRadius = *a[2];
     df_n = *a[3];
     invDx = *a[4];
+    value = a[5];
     spline = f_spline;
     zOmp_start = zstart + ((nlocalz / (Nvalue / 2)) * my_id);
     zOmp_end = zstart + ((nlocalz / (Nvalue / 2)) * (my_id + 1));
 
+    reply = 0;
+    athread_get(PE_MODE, &value[0], &_spline_[0], 5000 * 8, &reply, 0, 0, 0);
+    while (reply != 1);
 
     if (my_id == (Nvalue / 2 - 1)) {
         zOmp_end = nlocalz + zstart;
@@ -418,12 +442,26 @@ void cal_df(double *a[]) {
                 p = _rho[kk] * invDx + 1.0;
                 m = (int) p;
                 m = max(1, min(m, (df_n - 1)));
-                reply = 0;
+                //reply = 0;
                 //asm volatile ("memb");
-                athread_get(PE_MODE, &spline[m][0], &_spline[0], 3 * 8, &reply, 0, 0, 0);
+                //athread_get(PE_MODE, &spline[m][0], &_spline[0], 3*8, &reply, 0, 0, 0);
                 p -= m;
                 p = min(p, 1.0);
-                while (reply != 1);
+                //while(reply!=1);
+                _spline[2] =
+                        (((_spline_[m - 2] - _spline_[m + 2]) + 8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) *
+                        invDx;
+                _spline[1] = 2.0 * (3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 *
+                                                                            (((_spline_[m - 2] - _spline_[m + 2]) +
+                                                                              8.0 *
+                                                                              (_spline_[m + 1] - _spline_[m - 1])) /
+                                                                             12.0) -
+                                    (((_spline_[m - 1] - _spline_[m + 3]) + 8.0 * (_spline_[m + 2] - _spline_[m])) /
+                                     12.0)) * invDx;
+                _spline[0] = 3.0 * ((((_spline_[m - 2] - _spline_[m + 2]) + 8.0 * (_spline_[m + 1] - _spline_[m - 1])) /
+                                     12.0) +
+                                    (((_spline_[m - 1] - _spline_[m + 3]) + 8.0 * (_spline_[m + 2] - _spline_[m])) /
+                                     12.0) - 2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
                 dfEmbed = (_spline[0] * p + _spline[1]) * p + _spline[2];
                 //dfEmbed = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
 
@@ -453,6 +491,7 @@ void cal_force1(double *a[]) {
     double delx, dely, delz;
     int n;
     double *x, *f, *df, (*spline)[7];
+    double *value;
     int phi_n;
     double invDx;
     int m;
@@ -471,9 +510,478 @@ void cal_force1(double *a[]) {
     _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
     _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
     //_spline = (double*)ldm_malloc(sizeof(double)*7);
-    for (i = 0; i < 7; i++) {
-        _spline[i] = 0.0;
+
+    x = a[0];
+    f = a[1];
+    df = a[2];
+    cutoffRadius = *a[3];
+    phi_n = *a[4];
+    invDx = *a[5];
+    value = a[6];
+    subindex_z = (my_id * 2) % Nvalue;
+    zOmp_start = BeginOfArea(nlocalz, zstart, subindex_z);
+    zOmp_end = EndOfArea(nlocalz, zstart, subindex_z);
+    m_step = 0;
+    n_block = (nlocalx % 8) ? (nlocalx / 8 + 1) : (nlocalx / 8);
+
+    reply = 0;
+    athread_get(PE_MODE, &value[0], &_spline_[0], 5000 * 8, &reply, 0, 0, 0);
+    while (reply != 1);
+
+    for (k = zOmp_start; k < zOmp_end; k++) {
+        for (j = ystart; j < nlocaly + ystart; j++) {
+            //athread_syn(ARRAY_SCOPE, 0xffff);
+            for (m_step = 0; m_step < n_block; m_step++) {
+                reply = 0;
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+
+                kk = 16 * 2 + 4;
+                if ((m_step % n_block) < n_block - 1)
+                    x_end = 8;
+                else
+                    x_end = nlocalx - 8 * (n_block - 1);
+                while (reply != 6);
+                //athread_syn(ARRAY_SCOPE, 0xffff);
+                for (i = 0; i < x_end; i++) {
+                    xtemp = _x[kk * 3];
+                    ytemp = _x[kk * 3 + 1];
+                    ztemp = _x[kk * 3 + 2];
+                    //if(my_id == 0)
+                    //printf("x:%lf, %lf, %lf\n", xtemp, ytemp, ztemp);
+                    if (xtemp != -100) {
+                        for (l = 0; l < 68; l++) {
+                            n = kk + NeighborOffset[l];
+                            delx = xtemp - _x[n * 3];
+                            dely = ytemp - _x[n * 3 + 1];
+                            delz = ztemp - _x[n * 3 + 2];
+                            dist2 = delx * delx + dely * dely + delz * delz;
+                            //printf("nei:%lf, %lf, %lf\n", _x[n * 3], _x[n * 3+2], _x[n * 3+2]);
+                            if (dist2 < (cutoffRadius * cutoffRadius)) {
+                                r = sqrt(dist2);
+                                p = r * invDx + 1.0;
+                                m = (int) p;
+                                m = max(1, min(m, (phi_n - 1)));
+                                //reply = 0;
+                                //spline = phi_spline;
+                                //asm volatile ("memb");
+                                //athread_get(PE_MODE, &spline[m][0], &_spline[0], 7*8, &reply, 0, 0, 0);
+
+                                p -= m;
+                                p = min(p, 1.0);
+                                //while(reply!=1);
+                                _spline[6] = _spline_[m];
+                                _spline[5] = ((_spline_[m - 2] - _spline_[m + 2]) +
+                                              8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0;
+                                _spline[4] = 3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * _spline[5] -
+                                             ((_spline_[m - 1] - _spline_[m + 3]) +
+                                              8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0;
+                                _spline[3] = _spline[5] + ((_spline_[m - 1] - _spline_[m + 3]) +
+                                                           8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0 -
+                                             2.0 * (_spline_[m + 1] - _spline_[m]);
+                                _spline[2] = (((_spline_[m - 2] - _spline_[m + 2]) +
+                                               8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) * invDx;
+                                _spline[1] = 2.0 * (3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * (((_spline_[m - 2] -
+                                                                                                     _spline_[m + 2]) +
+                                                                                                    8.0 *
+                                                                                                    (_spline_[m + 1] -
+                                                                                                     _spline_[m - 1])) /
+                                                                                                   12.0) -
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0)) * invDx;
+                                _spline[0] = 3.0 * ((((_spline_[m - 2] - _spline_[m + 2]) +
+                                                      8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) +
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
+                                                    2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
+                                phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
+                                //phiTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
+                                dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                //dPhi = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
+                                //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
+
+                                z2 = phiTmp;
+                                z2p = dPhi;
+                                recip = 1.0 / r;
+                                phi = z2 * recip;
+                                phip = z2p * recip - phi * recip;
+                                psip = phip;
+                                fpair = -psip * recip;
+                                //printf("pair:%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %.15lf\n", m, _spline[2], z2, z2p, _df[kk], _x[n * 3], _x[n * 3+1], _x[n * 3+2], fpair);
+
+                                _f[kk * 3] += delx * fpair;
+                                _f[kk * 3 + 1] += dely * fpair;
+                                _f[kk * 3 + 2] += delz * fpair;
+
+                                _f[n * 3] -= delx * fpair;
+                                _f[n * 3 + 1] -= dely * fpair;
+                                _f[n * 3 + 2] -= delz * fpair;
+                                //if(my_id == 0)
+                                //printf("nei:%lf, %lf, %lf\n", _x[n * 3], _x[n * 3+2], _x[n * 3+2]);
+                                //printf("tmp:%lf, %lf, %lf\n", z2, z2p, phip);
+                                //if(kk==(nghostx*2+6+3))
+                                //	printf("kk+:%.15lf\n", _f[kk*3]);
+                                //if(n==(nghostx*2+6+3))
+                                //       printf("n-:%.15lf\n", _f[n*3]);
+                            }
+                        }
+                    }
+                    //if(my_id == 0)
+                    //	printf("f:%.15lf\n", _f_put[kk*3]);
+                    kk++;
+                }
+                put_reply = 0;
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                while (put_reply != 3);
+            }
+        }
     }
+
+    ldm_free(_x, sizeof(double) * (16 * 15 * 3));
+    ldm_free(_f, sizeof(double) * (16 * 15 * 3));
+    ldm_free(_df, sizeof(double) * (16 * 15));
+    //ldm_free(_spline, sizeof(double)*7);
+}
+
+void cal_force2(double *a[]) {
+    int subindex_z, zOmp_start, zOmp_end;
+    int i, j, k, l, kk, m_block;
+    double cutoffRadius;
+    double xtemp, ytemp, ztemp;
+    double delx, dely, delz;
+    int n;
+    double *x, *f, *df, (*spline)[7];
+    double *value;
+    int phi_n;
+    double invDx;
+    int m;
+    double dist2, r, p, phiTmp, dPhi, dRho;
+    double z2, z2p, recip, phi, phip, psip, fpair;
+    double *_x, *_f, *_df;
+    double _spline[7];
+    //double *_spline;
+    int m_step, x_end;
+    int n_block;
+    //double *_x, *_f, *_df;
+    //_x = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
+    //_f = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
+    //_df = (double*)ldm_malloc(sizeof(double)*(nghostx*15));
+    _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
+    _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
+    _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
+    //_spline = (double*)ldm_malloc(sizeof(double)*7);
+
+    x = a[0];
+    f = a[1];
+    df = a[2];
+    cutoffRadius = *a[3];
+    phi_n = *a[4];
+    invDx = *a[5];
+    value = a[6];
+    subindex_z = (my_id * 2 + 1) % Nvalue;
+    zOmp_start = BeginOfArea(nlocalz, zstart, subindex_z);
+    zOmp_end = EndOfArea(nlocalz, zstart, subindex_z);
+    if (my_id == (Nvalue / 2 - 1)) {
+        zOmp_end = nlocalz + zstart;
+    }
+    m_step = 0;
+    n_block = (nlocalx % 8) ? (nlocalx / 8 + 1) : (nlocalx / 8);
+
+    for (k = zOmp_start; k < zOmp_end; k++) {
+        for (j = ystart; j < nlocaly + ystart; j++) {
+            //athread_syn(ARRAY_SCOPE, 0xffff);
+            for (m_step = 0; m_step < n_block; m_step++) {
+                reply = 0;
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+
+                kk = 16 * 2 + 4;
+                if ((m_step % n_block) < n_block - 1)
+                    x_end = 8;
+                else
+                    x_end = nlocalx - 8 * (n_block - 1);
+                while (reply != 6);
+                //athread_syn(ARRAY_SCOPE, 0xffff);
+                for (i = 0; i < x_end; i++) {
+                    xtemp = _x[kk * 3];
+                    ytemp = _x[kk * 3 + 1];
+                    ztemp = _x[kk * 3 + 2];
+                    //if(my_id == 0)
+                    //	printf("x:%lf, %lf, %lf\n", xtemp, ytemp, ztemp);
+                    if (xtemp != -100) {
+                        for (l = 0; l < 68; l++) {
+                            n = kk + NeighborOffset[l];
+                            delx = xtemp - _x[n * 3];
+                            dely = ytemp - _x[n * 3 + 1];
+                            delz = ztemp - _x[n * 3 + 2];
+                            dist2 = delx * delx + dely * dely + delz * delz;
+                            if (dist2 < (cutoffRadius * cutoffRadius)) {
+                                r = sqrt(dist2);
+                                p = r * invDx + 1.0;
+                                m = (int) p;
+                                m = max(1, min(m, (phi_n - 1)));
+                                //reply = 0;
+                                //spline = phi_spline;
+                                //asm volatile ("memb");
+                                //athread_get(PE_MODE, &spline[m][0], &_spline[0], 7*8, &reply, 0, 0, 0);
+
+                                p -= m;
+                                p = min(p, 1.0);
+                                //while(reply!=1);
+                                _spline[6] = _spline_[m];
+                                _spline[5] = ((_spline_[m - 2] - _spline_[m + 2]) +
+                                              8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0;
+                                _spline[4] = 3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * _spline[5] -
+                                             ((_spline_[m - 1] - _spline_[m + 3]) +
+                                              8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0;
+                                _spline[3] = _spline[5] + ((_spline_[m - 1] - _spline_[m + 3]) +
+                                                           8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0 -
+                                             2.0 * (_spline_[m + 1] - _spline_[m]);
+                                _spline[2] = (((_spline_[m - 2] - _spline_[m + 2]) +
+                                               8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) * invDx;
+                                _spline[1] = 2.0 * (3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * (((_spline_[m - 2] -
+                                                                                                     _spline_[m + 2]) +
+                                                                                                    8.0 *
+                                                                                                    (_spline_[m + 1] -
+                                                                                                     _spline_[m - 1])) /
+                                                                                                   12.0) -
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0)) * invDx;
+                                _spline[0] = 3.0 * ((((_spline_[m - 2] - _spline_[m + 2]) +
+                                                      8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) +
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
+                                                    2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
+                                phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
+                                //phiTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
+                                dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                //dPhi = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
+                                //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
+
+                                z2 = phiTmp;
+                                z2p = dPhi;
+                                recip = 1.0 / r;
+                                phi = z2 * recip;
+                                phip = z2p * recip - phi * recip;
+                                psip = phip;
+                                fpair = -psip * recip;
+                                //printf("pair:%lf, %lf, %lf, %.15lf\n", _x[n * 3], _x[n * 3+1], _x[n * 3+2], fpair);
+
+                                _f[kk * 3] += delx * fpair;
+                                _f[kk * 3 + 1] += dely * fpair;
+                                _f[kk * 3 + 2] += delz * fpair;
+
+                                _f[n * 3] -= delx * fpair;
+                                _f[n * 3 + 1] -= dely * fpair;
+                                _f[n * 3 + 2] -= delz * fpair;
+                                //if(my_id == 0)
+                                //	printf("tmp:%lf, %lf, %lf, %.18lf\n", z2, z2p, psip, fpair);
+                                //if(kk==(nghostx*2+6+3))
+                                //	printf("kk+:%.15lf\n", _f[kk*3]);
+                                //if(n==(nghostx*2+6+3))
+                                //       printf("n-:%.15lf\n", _f[n*3]);
+                            }
+                        }
+                    }
+                    //if(my_id == 0)
+                    //	printf("f:%.15lf\n", _f_put[kk*3]);
+                    kk++;
+                }
+                put_reply = 0;
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                while (put_reply != 3);
+            }
+        }
+    }
+
+    value = a[7];
+    reply = 0;
+    athread_get(PE_MODE, &value[0], &_spline_[0], 5000 * 8, &reply, 0, 0, 0);
+    while (reply != 1);
+
+    for (k = zOmp_start; k < zOmp_end; k++) {
+        for (j = ystart; j < nlocaly + ystart; j++) {
+            //athread_syn(ARRAY_SCOPE, 0xffff);
+            for (m_step = 0; m_step < n_block; m_step++) {
+                reply = 0;
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                athread_get(PE_MODE, &df[kk], &_df[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &df[kk], &_df[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                athread_get(PE_MODE, &df[kk], &_df[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+
+                kk = 16 * 2 + 4;
+                if ((m_step % n_block) < n_block - 1)
+                    x_end = 8;
+                else
+                    x_end = nlocalx - 8 * (n_block - 1);
+                while (reply != 9);
+                //athread_syn(ARRAY_SCOPE, 0xffff);
+                for (i = 0; i < x_end; i++) {
+                    xtemp = _x[kk * 3];
+                    ytemp = _x[kk * 3 + 1];
+                    ztemp = _x[kk * 3 + 2];
+                    //if(my_id == 0)
+                    //	printf("x:%lf, %lf, %lf\n", xtemp, ytemp, ztemp);
+                    if (xtemp != -100) {
+                        for (l = 0; l < 68; l++) {
+                            n = kk + NeighborOffset[l];
+                            delx = xtemp - _x[n * 3];
+                            dely = ytemp - _x[n * 3 + 1];
+                            delz = ztemp - _x[n * 3 + 2];
+                            dist2 = delx * delx + dely * dely + delz * delz;
+                            if (dist2 < (cutoffRadius * cutoffRadius)) {
+                                r = sqrt(dist2);
+                                p = r * invDx + 1.0;
+                                m = (int) p;
+                                m = max(1, min(m, (phi_n - 1)));
+                                //reply = 0;
+                                //spline = phi_spline;
+                                //asm volatile ("memb");
+                                //athread_get(PE_MODE, &spline[m][0], &_spline[0], 7*8, &reply, 0, 0, 0);
+
+                                p -= m;
+                                p = min(p, 1.0);
+                                //while(reply!=1);
+
+                                _spline[2] = (((_spline_[m - 2] - _spline_[m + 2]) +
+                                               8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) * invDx;
+                                _spline[1] = 2.0 * (3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * (((_spline_[m - 2] -
+                                                                                                     _spline_[m + 2]) +
+                                                                                                    8.0 *
+                                                                                                    (_spline_[m + 1] -
+                                                                                                     _spline_[m - 1])) /
+                                                                                                   12.0) -
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0)) * invDx;
+                                _spline[0] = 3.0 * ((((_spline_[m - 2] - _spline_[m + 2]) +
+                                                      8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) +
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
+                                                    2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
+
+                                dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
+                                recip = 1.0 / r;
+                                psip = (_df[kk] + _df[n]) * dRho;
+                                fpair = -psip * recip;
+                                //printf("pair:%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %.15lf\n", m, _spline[2], z2, z2p, _df[kk], _x[n * 3], _x[n * 3+1], _x[n * 3+2], fpair);
+
+                                _f[kk * 3] += delx * fpair;
+                                _f[kk * 3 + 1] += dely * fpair;
+                                _f[kk * 3 + 2] += delz * fpair;
+
+                                _f[n * 3] -= delx * fpair;
+                                _f[n * 3 + 1] -= dely * fpair;
+                                _f[n * 3 + 2] -= delz * fpair;
+                                //if(my_id == 0)
+                                //	printf("tmp:%lf, %lf, %lf, %.18lf\n", z2, z2p, psip, fpair);
+                                //if(kk==(nghostx*2+6+3))
+                                //	printf("kk+:%.15lf\n", _f[kk*3]);
+                                //if(n==(nghostx*2+6+3))
+                                //       printf("n-:%.15lf\n", _f[n*3]);
+                            }
+                        }
+                    }
+                    //if(my_id == 0)
+                    //	printf("f:%.15lf\n", _f_put[kk*3]);
+                    kk++;
+                }
+                put_reply = 0;
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                            16 * 3 * 8);
+                while (put_reply != 3);
+            }
+        }
+    }
+
+    ldm_free(_x, sizeof(double) * (16 * 15 * 3));
+    ldm_free(_f, sizeof(double) * (16 * 15 * 3));
+    ldm_free(_df, sizeof(double) * (16 * 15));
+    //ldm_free(_spline, sizeof(double)*7);
+}
+
+void cal_force3(double *a[]) {
+    int subindex_z, zOmp_start, zOmp_end;
+    int i, j, k, l, m_block, kk;
+    double cutoffRadius;
+    double xtemp, ytemp, ztemp;
+    double delx, dely, delz;
+    int n;
+    double *x, *f, *df, (*spline)[7];
+    double *value;
+    int phi_n;
+    double invDx;
+    int m;
+    double dist2, r, p, phiTmp, dPhi, dRho;
+    double z2, z2p, recip, phi, phip, psip, fpair;
+    double *_x, *_f, *_df;
+    double _spline[7];
+    //double *_spline;
+    int m_step, x_end;
+    int n_block;
+    //double *_x, *_f, *_df;
+    //_x = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
+    //_f = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
+    //_df = (double*)ldm_malloc(sizeof(double)*(nghostx*15));
+    _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
+    _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
+    _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
+    //_spline = (double*)ldm_malloc(sizeof(double)*7);
+
     x = a[0];
     f = a[1];
     df = a[2];
@@ -528,203 +1036,42 @@ void cal_force1(double *a[]) {
                             dely = ytemp - _x[n * 3 + 1];
                             delz = ztemp - _x[n * 3 + 2];
                             dist2 = delx * delx + dely * dely + delz * delz;
-                            //printf("nei:%lf, %lf, %lf\n", _x[n * 3], _x[n * 3+2], _x[n * 3+2]);
                             if (dist2 < (cutoffRadius * cutoffRadius)) {
                                 r = sqrt(dist2);
                                 p = r * invDx + 1.0;
                                 m = (int) p;
                                 m = max(1, min(m, (phi_n - 1)));
-                                reply = 0;
-                                spline = phi_spline;
-                                asm volatile ("memb");
-                                athread_get(PE_MODE, &spline[m][0], &_spline[0], 7 * 8, &reply, 0, 0, 0);
-
-                                p -= m;
-                                p = min(p, 1.0);
-                                while (reply != 1);
-                                phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
-                                //phiTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
-                                dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
-                                reply = 0;
-                                spline = rho_spline;
-                                asm volatile ("memb");
-                                athread_get(PE_MODE, &spline[m][0], &_spline[0], 3 * 8, &reply, 0, 0, 0);
-                                while (reply != 1);
-                                dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
-                                //dPhi = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
-                                //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
-
-                                z2 = phiTmp;
-                                z2p = dPhi;
-                                recip = 1.0 / r;
-                                phi = z2 * recip;
-                                phip = z2p * recip - phi * recip;
-                                psip = (_df[kk] + _df[n]) * dRho + phip;
-                                fpair = -psip * recip;
-                                //printf("pair:%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %.15lf\n", m, _spline[6], phiTmp, z2p, _df[kk], _x[n * 3], _x[n * 3+1], _x[n * 3+2], fpair);
-
-                                _f[kk * 3] += delx * fpair;
-                                _f[kk * 3 + 1] += dely * fpair;
-                                _f[kk * 3 + 2] += delz * fpair;
-
-                                _f[n * 3] -= delx * fpair;
-                                _f[n * 3 + 1] -= dely * fpair;
-                                _f[n * 3 + 2] -= delz * fpair;
-                                //if(my_id == 0)
-                                //printf("nei:%lf, %lf, %lf\n", _x[n * 3], _x[n * 3+2], _x[n * 3+2]);
-                                //printf("tmp:%lf, %lf, %lf\n", z2, z2p, phip);
-                                //if(kk==(nghostx*2+6+3))
-                                //	printf("kk+:%.15lf\n", _f[kk*3]);
-                                //if(n==(nghostx*2+6+3))
-                                //       printf("n-:%.15lf\n", _f[n*3]);
-                            }
-                        }
-                    }
-                    //if(my_id == 0)
-                    //	printf("f:%.15lf\n", _f[kk*3]);
-                    kk++;
-                }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                while (put_reply != 3);
-            }
-        }
-    }
-
-    ldm_free(_x, sizeof(double) * (16 * 15 * 3));
-    ldm_free(_f, sizeof(double) * (16 * 15 * 3));
-    ldm_free(_df, sizeof(double) * (16 * 15));
-    //ldm_free(_spline, sizeof(double)*7);
-}
-
-void cal_force2(double *a[]) {
-    int subindex_z, zOmp_start, zOmp_end;
-    int i, j, k, l, kk, m_block;
-    double cutoffRadius;
-    double xtemp, ytemp, ztemp;
-    double delx, dely, delz;
-    int n;
-    double *x, *f, *df, (*spline)[7];
-    double *value;
-    int phi_n;
-    double invDx;
-    int m;
-    double dist2, r, p, phiTmp, dPhi, dRho;
-    double z2, z2p, recip, phi, phip, psip, fpair;
-    double *_x, *_f, *_df;
-    double _spline[7];
-    //double *_spline;
-    int m_step, x_end;
-    int n_block;
-    //double *_x, *_f, *_df;
-    //_x = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_f = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_df = (double*)ldm_malloc(sizeof(double)*(nghostx*15));
-    _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
-    _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
-    _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
-    //_spline = (double*)ldm_malloc(sizeof(double)*7);
-
-    for (i = 0; i < 7; i++) {
-        _spline[i] = 0.0;
-    }
-    x = a[0];
-    f = a[1];
-    df = a[2];
-    cutoffRadius = *a[3];
-    phi_n = *a[4];
-    invDx = *a[5];
-    value = a[6];
-    subindex_z = (my_id * 2 + 1) % Nvalue;
-    zOmp_start = BeginOfArea(nlocalz, zstart, subindex_z);
-    zOmp_end = EndOfArea(nlocalz, zstart, subindex_z);
-    if (my_id == (Nvalue / 2 - 1)) {
-        zOmp_end = nlocalz + zstart;
-    }
-    m_step = 0;
-    n_block = (nlocalx % 8) ? (nlocalx / 8 + 1) : (nlocalx / 8);
-
-    for (k = zOmp_start; k < zOmp_end; k++) {
-        for (j = ystart; j < nlocaly + ystart; j++) {
-            //athread_syn(ARRAY_SCOPE, 0xffff);
-            for (m_step = 0; m_step < n_block; m_step++) {
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-
-                kk = 16 * 2 + 4;
-                if ((m_step % n_block) < n_block - 1)
-                    x_end = 8;
-                else
-                    x_end = nlocalx - 8 * (n_block - 1);
-                while (reply != 9);
-                //athread_syn(ARRAY_SCOPE, 0xffff);
-                for (i = 0; i < x_end; i++) {
-                    xtemp = _x[kk * 3];
-                    ytemp = _x[kk * 3 + 1];
-                    ztemp = _x[kk * 3 + 2];
-                    //if(my_id == 0)
-                    //	printf("x:%lf, %lf, %lf\n", xtemp, ytemp, ztemp);
-                    if (xtemp != -100) {
-                        for (l = 0; l < 68; l++) {
-                            n = kk + NeighborOffset[l];
-                            delx = xtemp - _x[n * 3];
-                            dely = ytemp - _x[n * 3 + 1];
-                            delz = ztemp - _x[n * 3 + 2];
-                            dist2 = delx * delx + dely * dely + delz * delz;
-                            if (dist2 < (cutoffRadius * cutoffRadius)) {
-                                r = sqrt(dist2);
-                                p = r * invDx + 1.0;
-                                m = (int) p;
-                                m = max(1, min(m, (phi_n - 1)));
-                                reply = 0;
-                                spline = phi_spline;
+                                //reply = 0;
+                                //spline = phi_spline;
                                 //asm volatile ("memb");
-                                athread_get(PE_MODE, &spline[m][0], &_spline[0], 7 * 8, &reply, 0, 0, 0);
+                                //athread_get(PE_MODE, &spline[m][0], &_spline[0], 7*8, &reply, 0, 0, 0);
 
                                 p -= m;
                                 p = min(p, 1.0);
-                                while (reply != 1);
-                                phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
-                                //phiTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
-                                dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
-                                //dPhi = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
-                                reply = 0;
-                                spline = rho_spline;
-                                athread_get(PE_MODE, &spline[m][0], &_spline[0], 3 * 8, &reply, 0, 0, 0);
-                                while (reply != 1);
+                                //while(reply!=1);
+
+                                _spline[2] = (((_spline_[m - 2] - _spline_[m + 2]) +
+                                               8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) * invDx;
+                                _spline[1] = 2.0 * (3.0 * (_spline_[m + 1] - _spline_[m]) - 2.0 * (((_spline_[m - 2] -
+                                                                                                     _spline_[m + 2]) +
+                                                                                                    8.0 *
+                                                                                                    (_spline_[m + 1] -
+                                                                                                     _spline_[m - 1])) /
+                                                                                                   12.0) -
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0)) * invDx;
+                                _spline[0] = 3.0 * ((((_spline_[m - 2] - _spline_[m + 2]) +
+                                                      8.0 * (_spline_[m + 1] - _spline_[m - 1])) / 12.0) +
+                                                    (((_spline_[m - 1] - _spline_[m + 3]) +
+                                                      8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
+                                                    2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
+
                                 dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
                                 //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
-
-                                z2 = phiTmp;
-                                z2p = dPhi;
                                 recip = 1.0 / r;
-                                phi = z2 * recip;
-                                phip = z2p * recip - phi * recip;
-                                psip = (_df[kk] + _df[n]) * dRho + phip;
+                                psip = (_df[kk] + _df[n]) * dRho;
                                 fpair = -psip * recip;
-                                //printf("pair:%lf, %lf, %lf, %.15lf\n", _x[n * 3], _x[n * 3+1], _x[n * 3+2], fpair);
+                                //printf("pair:%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %.15lf\n", m, _spline[2], z2, z2p, _df[kk], _x[n * 3], _x[n * 3+1], _x[n * 3+2], fpair);
 
                                 _f[kk * 3] += delx * fpair;
                                 _f[kk * 3 + 1] += dely * fpair;
@@ -739,6 +1086,8 @@ void cal_force2(double *a[]) {
                                 //	printf("kk+:%.15lf\n", _f[kk*3]);
                                 //if(n==(nghostx*2+6+3))
                                 //       printf("n-:%.15lf\n", _f[n*3]);
+                                //printf("nei:%lf, %lf, %lf, %d, %d\n", _x[n * 3], _x[n * 3+2], _x[n * 3+2], NeighborOffset[l], n);
+                                //printf("tmp:%lf, %lf, %lf, %lf\n", dRho, _df[kk], _df[n], fpair);
                             }
                         }
                     }
