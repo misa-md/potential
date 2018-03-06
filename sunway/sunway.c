@@ -7,7 +7,7 @@ void sunwayAThreadInit() {
     athread_init();
     int i;
     i = athread_get_max_threads();
-    printf("max thread:%d", i);
+    printf("max thread:%d", i); // todo only print in master processor.
 }
 
 void sunwayAThreadClean() {

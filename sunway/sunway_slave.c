@@ -120,11 +120,12 @@ void cal_rho1(double *a[]) {
     double *x, *rho, (*spline)[7], *spline_mem;
     double *value;
     double _spline[4];
+    //double *_spline;
     int rho_n;
     double invDx;
     double dist2, r, p, rhoTmp;
     int m;
-    double _x[16 * 15 * 3], _rho[16 * 15];
+    double _x[16 * 15 * 3], _rho[16 * 15], _x_tmp[8 * 15 * 3], _rho_tmp[8 * 15];
     int m_step, x_end;
     int n_block;
     int next;
@@ -160,26 +161,63 @@ void cal_rho1(double *a[]) {
             //time += difftime(stoptime,starttime)/CLOCKS_PER_SEC;
             for (m_step = 0; m_step < n_block; m_step++) {
                 //athread_syn(ARRAY_SCOPE, 0xffff);
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                if (m_step == 0) {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                } else {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho_tmp[0], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho_tmp[8 * 5], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho_tmp[8 * 10], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i)] = _x[3 * (l + 16 * i + 8)];
+                            _x[3 * (l + 16 * i) + 1] = _x[3 * (l + 16 * i + 8) + 1];
+                            _x[3 * (l + 16 * i) + 2] = _x[3 * (l + 16 * i + 8) + 2];
+                            _rho[l + 16 * i] = _rho[l + 16 * i + 8];
+                        }
+                    }
+                }
 
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &rho[kk], &_rho[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &rho[kk], &_rho[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &rho[kk], &_rho[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-
+                //printf("kk:%d, %d, %lf\n", m_step, kk, rho[11664+nghostx*3+11]);
                 kk = 16 * 2 + 4;
                 if ((m_step % n_block) < n_block - 1)
                     x_end = 8;
                 else
                     x_end = nlocalx - 8 * (n_block - 1);
                 while (reply != 6);
+                if (m_step > 0) {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i + 8)] = _x_tmp[3 * (l + 8 * i)];
+                            _x[3 * (l + 16 * i + 8) + 1] = _x_tmp[3 * (l + 8 * i) + 1];
+                            _x[3 * (l + 16 * i + 8) + 2] = _x_tmp[3 * (l + 8 * i) + 2];
+                            _rho[l + 16 * i + 8] = _rho_tmp[l + 8 * i];
+                        }
+                    }
+                }
+                //if(j==ystart+1&&m_step==0)
+                //        printf("rho:%lf\n", _rho[43]);
                 //athread_syn(ARRAY_SCOPE, 0xffff);
                 for (i = 0; i < x_end; i++) {
                     xtemp = _x[kk * 3];
@@ -188,7 +226,7 @@ void cal_rho1(double *a[]) {
                     //if(my_id == 0)
                     //if(m_step ==(n_block-1)&&i ==x_end-1)
                     //if(j==ystart+1&&m_step==0&&i == x_end-1)
-                    //printf("x;%d, %lf, %lf, %lf, %lf\n",kk, _rho[kk], xtemp, ytemp, ztemp);
+                    //printf("x;%d, %lf, %lf, %lf\n",kk, xtemp, ytemp, ztemp);
                     if (xtemp != -100) {
                         for (l = 0; l < 68; l++) {
                             n = kk + NeighborOffset[l];
@@ -225,7 +263,10 @@ void cal_rho1(double *a[]) {
                                                            8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0 -
                                              2.0 * (_spline_[m + 1] - _spline_[m]);
                                 //rtc(&stop);
-                                rhoTmp = ((_spline[0] * p + _spline[1]) * p + _spline[2]) * p + _spline[3];
+                                if (m >= 4997)
+                                    rhoTmp = 0.0;
+                                else
+                                    rhoTmp = ((_spline[0] * p + _spline[1]) * p + _spline[2]) * p + _spline[3];
                                 //printf("tmp:%lf\n", rhoTmp);
                                 //rhoTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
                                 //printf("tmp:%lf\n", rhoTmp);
@@ -233,7 +274,7 @@ void cal_rho1(double *a[]) {
                                 _rho[n] += rhoTmp;
                                 //if(m_step ==(n_block-1)&&i ==x_end-1)
                                 //if(j==ystart+1&&m_step==0&&i == x_end-1)
-                                //	printf("nei:%d, %lf, %lf, %lf\n", n, _x[n*3], _x[n*3+1], _x[n*3+2]);
+                                //	printf("nei:%lf, %lf, %lf\n", _x[n*3], _x[n*3+1], _x[n*3+2]);
                                 //rtc(&stop);
                                 //if(my_id == 0)
                                 //printf("r:%d\n", stop-start);
@@ -246,14 +287,30 @@ void cal_rho1(double *a[]) {
                     //printf("rho:%lf\n", _rho[kk]);
                     kk++;
                 }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_rho[0], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_rho[16 * 5], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_rho[16 * 10], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
-                while (put_reply != 3);
+                if (m_step == 0 || m_step == n_block - 1) {
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_rho[0], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_rho[16 * 5], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_rho[16 * 10], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
+                    while (put_reply != 3);
+                } else {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _rho_tmp[l + 8 * i] = _rho[16 * i + l];
+                        }
+                    }
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_rho_tmp[0], &rho[kk], 8 * 5 * 8, &put_reply, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_rho_tmp[8 * 5], &rho[kk], 8 * 5 * 8, &put_reply, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_rho_tmp[8 * 10], &rho[kk], 8 * 5 * 8, &put_reply, (nghostx - 8) * 8, 8 * 8);
+                    while (put_reply != 3);
+                }
             }
         }
     }
@@ -276,14 +333,15 @@ void cal_rho2(double *a[]) {
     int m;
     double dist2, r, p, rhoTmp;
     double _spline[4];
-    double _x[16 * 15 * 3], _rho[16 * 15];
+    //double _x[16*15*3], _rho[16*15], _x_tmp[8*15*3], _rho_tmp[8*15];
+    double *_x, *_rho, _x_tmp[8 * 15 * 3], _rho_tmp[8 * 15];
     int m_step, x_end;
     int n_block;
     int next;
     //if(my_id == 0)
     //	printf("s\n");
-    //_x = (double*)ldm_malloc(sizeof(double)*(16*15*3));
-    //_rho = (double*)ldm_malloc(sizeof(double)*(16*15));
+    _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
+    _rho = (double *) ldm_malloc(sizeof(double) * (16 * 15));
     //_spline = (double*)ldm_malloc(sizeof(double)*4);
     //if(my_id == 0)
     //	printf("space:%d \n", get_allocatable_size());
@@ -308,18 +366,43 @@ void cal_rho2(double *a[]) {
     for (k = zOmp_start; k < zOmp_end; k++) {
         for (j = ystart; j < nlocaly + ystart; j++) {
             for (m_step = 0; m_step < n_block; m_step++) {
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &rho[kk], &_rho[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &rho[kk], &_rho[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &rho[kk], &_rho[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                if (m_step == 0) {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                } else {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho_tmp[0], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho_tmp[8 * 5], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &rho[kk], &_rho_tmp[8 * 10], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i)] = _x[3 * (l + 16 * i + 8)];
+                            _x[3 * (l + 16 * i) + 1] = _x[3 * (l + 16 * i + 8) + 1];
+                            _x[3 * (l + 16 * i) + 2] = _x[3 * (l + 16 * i + 8) + 2];
+                            _rho[l + 16 * i] = _rho[l + 16 * i + 8];
+                        }
+                    }
+                }
 
                 kk = 16 * 2 + 4;
                 if ((m_step % n_block) < n_block - 1)
@@ -327,6 +410,16 @@ void cal_rho2(double *a[]) {
                 else
                     x_end = nlocalx - 8 * (n_block - 1);
                 while (reply != 6);
+                if (m_step > 0) {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i + 8)] = _x_tmp[3 * (l + 8 * i)];
+                            _x[3 * (l + 16 * i + 8) + 1] = _x_tmp[3 * (l + 8 * i) + 1];
+                            _x[3 * (l + 16 * i + 8) + 2] = _x_tmp[3 * (l + 8 * i) + 2];
+                            _rho[l + 16 * i + 8] = _rho_tmp[l + 8 * i];
+                        }
+                    }
+                }
                 //athread_syn(ARRAY_SCOPE, 0xffff);
                 for (i = 0; i < x_end; i++) {
                     //printf("before:%d, %d, %lf, %lf\n", next, *_reply_comp, _rho_put[kk], rho[55070+nghostx*2+4]);
@@ -363,7 +456,11 @@ void cal_rho2(double *a[]) {
                                 _spline[0] = _spline[2] + ((_spline_[m - 1] - _spline_[m + 3]) +
                                                            8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0 -
                                              2.0 * (_spline_[m + 1] - _spline_[m]);
-                                rhoTmp = ((_spline[0] * p + _spline[1]) * p + _spline[2]) * p + _spline[3];
+
+                                if (m >= 4997)
+                                    rhoTmp = 0.0;
+                                else
+                                    rhoTmp = ((_spline[0] * p + _spline[1]) * p + _spline[2]) * p + _spline[3];
                                 _rho[kk] += rhoTmp;
                                 _rho[n] += rhoTmp;
                             }
@@ -373,21 +470,37 @@ void cal_rho2(double *a[]) {
                     //printf("%lf\n", _rho_put[kk]);
                     kk++;
                 }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_rho[0], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_rho[16 * 5], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_rho[16 * 10], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
-                while (put_reply != 3);
+                if (m_step == 0 || m_step == n_block - 1) {
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_rho[0], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_rho[16 * 5], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_rho[16 * 10], &rho[kk], 16 * 5 * 8, &put_reply, (nghostx - 16) * 8, 16 * 8);
+                    while (put_reply != 3);
+                } else {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _rho_tmp[l + 8 * i] = _rho[16 * i + l];
+                        }
+                    }
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_rho_tmp[0], &rho[kk], 8 * 5 * 8, &put_reply, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_rho_tmp[8 * 5], &rho[kk], 8 * 5 * 8, &put_reply, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_rho_tmp[8 * 10], &rho[kk], 8 * 5 * 8, &put_reply, (nghostx - 8) * 8, 8 * 8);
+                    while (put_reply != 3);
+                }
             }
         }
     }
     //printf("b");
     //athread_syn(ARRAY_SCOPE, 0xffff);
-    //ldm_free(_x, sizeof(double)*(16*15*3));
-    //ldm_free(_rho, sizeof(double)*(16*15));
+    ldm_free(_x, sizeof(double) * (16 * 15 * 3));
+    ldm_free(_rho, sizeof(double) * (16 * 15));
     //ldm_free(_spline, sizeof(double)*4);
 }
 
@@ -462,6 +575,7 @@ void cal_df(double *a[]) {
                                      12.0) +
                                     (((_spline_[m - 1] - _spline_[m + 3]) + 8.0 * (_spline_[m + 2] - _spline_[m])) /
                                      12.0) - 2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
+
                 dfEmbed = (_spline[0] * p + _spline[1]) * p + _spline[2];
                 //dfEmbed = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
 
@@ -497,18 +611,14 @@ void cal_force1(double *a[]) {
     int m;
     double dist2, r, p, phiTmp, dPhi, dRho;
     double z2, z2p, recip, phi, phip, psip, fpair;
-    double *_x, *_f, *_df;
+    //double _x[16*15*3], _f[16*15*3], _x_tmp[8*15*3], _f_tmp[8*15*3];
+    double *_x, *_f, _x_tmp[8 * 15 * 3], _f_tmp[8 * 15 * 3];
     double _spline[7];
     //double *_spline;
     int m_step, x_end;
     int n_block;
-    //double *_x, *_f, *_df;
-    //_x = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_f = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_df = (double*)ldm_malloc(sizeof(double)*(nghostx*15));
     _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
     _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
-    _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
     //_spline = (double*)ldm_malloc(sizeof(double)*7);
 
     x = a[0];
@@ -532,20 +642,51 @@ void cal_force1(double *a[]) {
         for (j = ystart; j < nlocaly + ystart; j++) {
             //athread_syn(ARRAY_SCOPE, 0xffff);
             for (m_step = 0; m_step < n_block; m_step++) {
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
+                if (m_step == 0) {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                } else {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i)] = _x[3 * (l + 16 * i + 8)];
+                            _x[3 * (l + 16 * i) + 1] = _x[3 * (l + 16 * i + 8) + 1];
+                            _x[3 * (l + 16 * i) + 2] = _x[3 * (l + 16 * i + 8) + 2];
+                            _f[3 * (l + 16 * i)] = _f[3 * (l + 16 * i + 8)];
+                            _f[3 * (l + 16 * i) + 1] = _f[3 * (l + 16 * i + 8) + 1];
+                            _f[3 * (l + 16 * i) + 2] = _f[3 * (l + 16 * i + 8) + 2];
+                        }
+                    }
+                }
 
                 kk = 16 * 2 + 4;
                 if ((m_step % n_block) < n_block - 1)
@@ -553,6 +694,18 @@ void cal_force1(double *a[]) {
                 else
                     x_end = nlocalx - 8 * (n_block - 1);
                 while (reply != 6);
+                if (m_step > 0) {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i + 8)] = _x_tmp[3 * (l + 8 * i)];
+                            _x[3 * (l + 16 * i + 8) + 1] = _x_tmp[3 * (l + 8 * i) + 1];
+                            _x[3 * (l + 16 * i + 8) + 2] = _x_tmp[3 * (l + 8 * i) + 2];
+                            _f[3 * (l + 16 * i + 8)] = _f_tmp[3 * (l + 8 * i)];
+                            _f[3 * (l + 16 * i + 8) + 1] = _f_tmp[3 * (l + 8 * i) + 1];
+                            _f[3 * (l + 16 * i + 8) + 2] = _f_tmp[3 * (l + 8 * i) + 2];
+                        }
+                    }
+                }
                 //athread_syn(ARRAY_SCOPE, 0xffff);
                 for (i = 0; i < x_end; i++) {
                     xtemp = _x[kk * 3];
@@ -605,9 +758,14 @@ void cal_force1(double *a[]) {
                                                     (((_spline_[m - 1] - _spline_[m + 3]) +
                                                       8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
                                                     2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
-                                phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
+                                if (m >= 4997) {
+                                    phiTmp = 0.0;
+                                    dPhi = 0.0;
+                                } else {
+                                    phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
+                                    dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                }
                                 //phiTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
-                                dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
                                 //dPhi = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
                                 //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
 
@@ -638,26 +796,47 @@ void cal_force1(double *a[]) {
                         }
                     }
                     //if(my_id == 0)
-                    //	printf("f:%.15lf\n", _f_put[kk*3]);
+                    //printf("f:%.15lf\n", _f[kk*3]);
                     kk++;
                 }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                while (put_reply != 3);
+                if (m_step == 0 || m_step == n_block - 1) {
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    while (put_reply != 3);
+                } else {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _f_tmp[3 * (l + 8 * i)] = _f[3 * (16 * i + l)];
+                            _f_tmp[3 * (l + 8 * i) + 1] = _f[3 * (16 * i + l) + 1];
+                            _f_tmp[3 * (l + 8 * i) + 2] = _f[3 * (16 * i + l) + 2];
+                        }
+                    }
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f_tmp[0], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f_tmp[8 * 15], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f_tmp[8 * 10 * 3], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    while (put_reply != 3);
+                }
             }
         }
     }
 
     ldm_free(_x, sizeof(double) * (16 * 15 * 3));
     ldm_free(_f, sizeof(double) * (16 * 15 * 3));
-    ldm_free(_df, sizeof(double) * (16 * 15));
     //ldm_free(_spline, sizeof(double)*7);
 }
 
@@ -675,15 +854,11 @@ void cal_force2(double *a[]) {
     int m;
     double dist2, r, p, phiTmp, dPhi, dRho;
     double z2, z2p, recip, phi, phip, psip, fpair;
-    double *_x, *_f, *_df;
+    //double _x[16*15*3], _f[16*15*3], _df[16*15*3], _x_tmp[8*15*3], _f_tmp[8*15*3], _df_tmp[8*15];
+    double *_x, *_f, *_df, _x_tmp[8 * 15 * 3], _f_tmp[8 * 15 * 3], _df_tmp[8 * 15];
     double _spline[7];
-    //double *_spline;
     int m_step, x_end;
     int n_block;
-    //double *_x, *_f, *_df;
-    //_x = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_f = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_df = (double*)ldm_malloc(sizeof(double)*(nghostx*15));
     _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
     _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
     _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
@@ -709,20 +884,51 @@ void cal_force2(double *a[]) {
         for (j = ystart; j < nlocaly + ystart; j++) {
             //athread_syn(ARRAY_SCOPE, 0xffff);
             for (m_step = 0; m_step < n_block; m_step++) {
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
+                if (m_step == 0) {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                } else {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i)] = _x[3 * (l + 16 * i + 8)];
+                            _x[3 * (l + 16 * i) + 1] = _x[3 * (l + 16 * i + 8) + 1];
+                            _x[3 * (l + 16 * i) + 2] = _x[3 * (l + 16 * i + 8) + 2];
+                            _f[3 * (l + 16 * i)] = _f[3 * (l + 16 * i + 8)];
+                            _f[3 * (l + 16 * i) + 1] = _f[3 * (l + 16 * i + 8) + 1];
+                            _f[3 * (l + 16 * i) + 2] = _f[3 * (l + 16 * i + 8) + 2];
+                        }
+                    }
+                }
 
                 kk = 16 * 2 + 4;
                 if ((m_step % n_block) < n_block - 1)
@@ -730,6 +936,18 @@ void cal_force2(double *a[]) {
                 else
                     x_end = nlocalx - 8 * (n_block - 1);
                 while (reply != 6);
+                if (m_step > 0) {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i + 8)] = _x_tmp[3 * (l + 8 * i)];
+                            _x[3 * (l + 16 * i + 8) + 1] = _x_tmp[3 * (l + 8 * i) + 1];
+                            _x[3 * (l + 16 * i + 8) + 2] = _x_tmp[3 * (l + 8 * i) + 2];
+                            _f[3 * (l + 16 * i + 8)] = _f_tmp[3 * (l + 8 * i)];
+                            _f[3 * (l + 16 * i + 8) + 1] = _f_tmp[3 * (l + 8 * i) + 1];
+                            _f[3 * (l + 16 * i + 8) + 2] = _f_tmp[3 * (l + 8 * i) + 2];
+                        }
+                    }
+                }
                 //athread_syn(ARRAY_SCOPE, 0xffff);
                 for (i = 0; i < x_end; i++) {
                     xtemp = _x[kk * 3];
@@ -782,8 +1000,14 @@ void cal_force2(double *a[]) {
                                                       8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
                                                     2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
                                 phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
+                                if (m >= 4997) {
+                                    phiTmp = 0.0;
+                                    dPhi = 0.0;
+                                } else {
+                                    phiTmp = ((_spline[3] * p + _spline[4]) * p + _spline[5]) * p + _spline[6];
+                                    dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                }
                                 //phiTmp = ((spline[m][3]*p + spline[m][4])*p + spline[m][5])*p + spline[m][6];
-                                dPhi = (_spline[0] * p + _spline[1]) * p + _spline[2];
                                 //dPhi = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
                                 //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
 
@@ -816,46 +1040,105 @@ void cal_force2(double *a[]) {
                     //	printf("f:%.15lf\n", _f_put[kk*3]);
                     kk++;
                 }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                while (put_reply != 3);
+                if (m_step == 0 || m_step == n_block - 1) {
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    while (put_reply != 3);
+                } else {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _f_tmp[3 * (l + 8 * i)] = _f[3 * (16 * i + l)];
+                            _f_tmp[3 * (l + 8 * i) + 1] = _f[3 * (16 * i + l) + 1];
+                            _f_tmp[3 * (l + 8 * i) + 2] = _f[3 * (16 * i + l) + 2];
+                        }
+                    }
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f_tmp[0], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f_tmp[8 * 15], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f_tmp[8 * 10 * 3], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    while (put_reply != 3);
+                }
             }
         }
     }
 
+    //printf("11\n");
     value = a[7];
     reply = 0;
     athread_get(PE_MODE, &value[0], &_spline_[0], 5000 * 8, &reply, 0, 0, 0);
     while (reply != 1);
+    //printf("22\n");
 
     for (k = zOmp_start; k < zOmp_end; k++) {
         for (j = ystart; j < nlocaly + ystart; j++) {
             //athread_syn(ARRAY_SCOPE, 0xffff);
             for (m_step = 0; m_step < n_block; m_step++) {
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                if (m_step == 0) {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                } else {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df_tmp[0], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df_tmp[8 * 5], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df_tmp[8 * 10], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i)] = _x[3 * (l + 16 * i + 8)];
+                            _x[3 * (l + 16 * i) + 1] = _x[3 * (l + 16 * i + 8) + 1];
+                            _x[3 * (l + 16 * i) + 2] = _x[3 * (l + 16 * i + 8) + 2];
+                            _f[3 * (l + 16 * i)] = _f[3 * (l + 16 * i + 8)];
+                            _f[3 * (l + 16 * i) + 1] = _f[3 * (l + 16 * i + 8) + 1];
+                            _f[3 * (l + 16 * i) + 2] = _f[3 * (l + 16 * i + 8) + 2];
+                            _df[l + 16 * i] = _df[l + 16 * i + 8];
+                        }
+                    }
+                }
 
                 kk = 16 * 2 + 4;
                 if ((m_step % n_block) < n_block - 1)
@@ -863,6 +1146,19 @@ void cal_force2(double *a[]) {
                 else
                     x_end = nlocalx - 8 * (n_block - 1);
                 while (reply != 9);
+                if (m_step > 0) {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i + 8)] = _x_tmp[3 * (l + 8 * i)];
+                            _x[3 * (l + 16 * i + 8) + 1] = _x_tmp[3 * (l + 8 * i) + 1];
+                            _x[3 * (l + 16 * i + 8) + 2] = _x_tmp[3 * (l + 8 * i) + 2];
+                            _f[3 * (l + 16 * i + 8)] = _f_tmp[3 * (l + 8 * i)];
+                            _f[3 * (l + 16 * i + 8) + 1] = _f_tmp[3 * (l + 8 * i) + 1];
+                            _f[3 * (l + 16 * i + 8) + 2] = _f_tmp[3 * (l + 8 * i) + 2];
+                            _df[l + 16 * i + 8] = _df_tmp[l + 8 * i];
+                        }
+                    }
+                }
                 //athread_syn(ARRAY_SCOPE, 0xffff);
                 for (i = 0; i < x_end; i++) {
                     xtemp = _x[kk * 3];
@@ -907,7 +1203,10 @@ void cal_force2(double *a[]) {
                                                       8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
                                                     2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
 
-                                dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                if (m >= 4997)
+                                    dRho = 0.0;
+                                else
+                                    dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
                                 //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
                                 recip = 1.0 / r;
                                 psip = (_df[kk] + _df[n]) * dRho;
@@ -934,20 +1233,43 @@ void cal_force2(double *a[]) {
                     //	printf("f:%.15lf\n", _f_put[kk*3]);
                     kk++;
                 }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                while (put_reply != 3);
+                if (m_step == 0 || m_step == n_block - 1) {
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    while (put_reply != 3);
+                } else {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _f_tmp[3 * (l + 8 * i)] = _f[3 * (16 * i + l)];
+                            _f_tmp[3 * (l + 8 * i) + 1] = _f[3 * (16 * i + l) + 1];
+                            _f_tmp[3 * (l + 8 * i) + 2] = _f[3 * (16 * i + l) + 2];
+                        }
+                    }
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f_tmp[0], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f_tmp[8 * 15], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f_tmp[8 * 10 * 3], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    while (put_reply != 3);
+                }
             }
         }
     }
 
+    //printf("33\n");
     ldm_free(_x, sizeof(double) * (16 * 15 * 3));
     ldm_free(_f, sizeof(double) * (16 * 15 * 3));
     ldm_free(_df, sizeof(double) * (16 * 15));
@@ -968,15 +1290,10 @@ void cal_force3(double *a[]) {
     int m;
     double dist2, r, p, phiTmp, dPhi, dRho;
     double z2, z2p, recip, phi, phip, psip, fpair;
-    double *_x, *_f, *_df;
+    double *_x, *_f, *_df, _x_tmp[8 * 15 * 3], _f_tmp[8 * 15 * 3], _df_tmp[8 * 15];
     double _spline[7];
-    //double *_spline;
     int m_step, x_end;
     int n_block;
-    //double *_x, *_f, *_df;
-    //_x = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_f = (double*)ldm_malloc(sizeof(double)*(nghostx*15*3));
-    //_df = (double*)ldm_malloc(sizeof(double)*(nghostx*15));
     _x = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
     _f = (double *) ldm_malloc(sizeof(double) * (16 * 15 * 3));
     _df = (double *) ldm_malloc(sizeof(double) * (16 * 15));
@@ -998,23 +1315,58 @@ void cal_force3(double *a[]) {
         for (j = ystart; j < nlocaly + ystart; j++) {
             //athread_syn(ARRAY_SCOPE, 0xffff);
             for (m_step = 0; m_step < n_block; m_step++) {
-                reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                athread_get(PE_MODE, &df[kk], &_df[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                if (m_step == 0) {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[0], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df[0], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 5 * 3], 16 * 5 * 3 * 8, &reply, 0, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df[16 * 5], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f[16 * 10 * 3], 16 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 16) * 3 * 8, 16 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df[16 * 10], 16 * 5 * 8, &reply, 0, (nghostx - 16) * 8, 16 * 8);
+                } else {
+                    reply = 0;
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[0], 8 * 5 * 3 * 8, &reply, 0, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df_tmp[0], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 1);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 5 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df_tmp[8 * 5], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    kk = IndexOf3DIndex(8 * ((m_step + 1)), j - 2, k + 2);
+                    athread_get(PE_MODE, &x[kk * 3], &_x_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &f[kk * 3], &_f_tmp[8 * 10 * 3], 8 * 5 * 3 * 8, &reply, 0,
+                                (nghostx - 8) * 3 * 8, 8 * 3 * 8);
+                    athread_get(PE_MODE, &df[kk], &_df_tmp[8 * 10], 8 * 5 * 8, &reply, 0, (nghostx - 8) * 8, 8 * 8);
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i)] = _x[3 * (l + 16 * i + 8)];
+                            _x[3 * (l + 16 * i) + 1] = _x[3 * (l + 16 * i + 8) + 1];
+                            _x[3 * (l + 16 * i) + 2] = _x[3 * (l + 16 * i + 8) + 2];
+                            _f[3 * (l + 16 * i)] = _f[3 * (l + 16 * i + 8)];
+                            _f[3 * (l + 16 * i) + 1] = _f[3 * (l + 16 * i + 8) + 1];
+                            _f[3 * (l + 16 * i) + 2] = _f[3 * (l + 16 * i + 8) + 2];
+                            _df[l + 16 * i] = _df[l + 16 * i + 8];
+                        }
+                    }
+                }
 
                 kk = 16 * 2 + 4;
                 if ((m_step % n_block) < n_block - 1)
@@ -1022,6 +1374,19 @@ void cal_force3(double *a[]) {
                 else
                     x_end = nlocalx - 8 * (n_block - 1);
                 while (reply != 9);
+                if (m_step > 0) {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _x[3 * (l + 16 * i + 8)] = _x_tmp[3 * (l + 8 * i)];
+                            _x[3 * (l + 16 * i + 8) + 1] = _x_tmp[3 * (l + 8 * i) + 1];
+                            _x[3 * (l + 16 * i + 8) + 2] = _x_tmp[3 * (l + 8 * i) + 2];
+                            _f[3 * (l + 16 * i + 8)] = _f_tmp[3 * (l + 8 * i)];
+                            _f[3 * (l + 16 * i + 8) + 1] = _f_tmp[3 * (l + 8 * i) + 1];
+                            _f[3 * (l + 16 * i + 8) + 2] = _f_tmp[3 * (l + 8 * i) + 2];
+                            _df[l + 16 * i + 8] = _df_tmp[l + 8 * i];
+                        }
+                    }
+                }
                 //athread_syn(ARRAY_SCOPE, 0xffff);
                 for (i = 0; i < x_end; i++) {
                     xtemp = _x[kk * 3];
@@ -1066,7 +1431,10 @@ void cal_force3(double *a[]) {
                                                       8.0 * (_spline_[m + 2] - _spline_[m])) / 12.0) -
                                                     2.0 * (_spline_[m + 1] - _spline_[m])) * invDx;
 
-                                dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
+                                if (m >= 4997)
+                                    dRho = 0.0;
+                                else
+                                    dRho = (_spline[0] * p + _spline[1]) * p + _spline[2];
                                 //dRho = (spline[m][0]*p + spline[m][1])*p + spline[m][2];
                                 recip = 1.0 / r;
                                 psip = (_df[kk] + _df[n]) * dRho;
@@ -1095,16 +1463,38 @@ void cal_force3(double *a[]) {
                     //	printf("f:%.15lf\n", _f_put[kk*3]);
                     kk++;
                 }
-                put_reply = 0;
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
-                athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8, 16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
-                athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
-                athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
-                            16 * 3 * 8);
-                while (put_reply != 3);
+                if (m_step == 0 || m_step == n_block - 1) {
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f[0], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f[16 * 15], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f[16 * 10 * 3], &f[kk * 3], 16 * 15 * 8, &put_reply, (nghostx - 16) * 3 * 8,
+                                16 * 3 * 8);
+                    while (put_reply != 3);
+                } else {
+                    for (i = 0; i < 15; i++) {
+                        for (l = 0; l < 8; l++) {
+                            _f_tmp[3 * (l + 8 * i)] = _f[3 * (16 * i + l)];
+                            _f_tmp[3 * (l + 8 * i) + 1] = _f[3 * (16 * i + l) + 1];
+                            _f_tmp[3 * (l + 8 * i) + 2] = _f[3 * (16 * i + l) + 2];
+                        }
+                    }
+                    put_reply = 0;
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k);
+                    athread_put(PE_MODE, &_f_tmp[0], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 1);
+                    athread_put(PE_MODE, &_f_tmp[8 * 15], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    kk = IndexOf3DIndex(8 * (m_step % n_block), j - 2, k + 2);
+                    athread_put(PE_MODE, &_f_tmp[8 * 10 * 3], &f[kk * 3], 8 * 15 * 8, &put_reply, (nghostx - 8) * 3 * 8,
+                                8 * 3 * 8);
+                    while (put_reply != 3);
+                }
             }
         }
     }
