@@ -7,7 +7,7 @@
  */
 
 #include <stdio.h>
-#include "sunway.h"
+#include "sunway_env.h"
 
 void sunwayAThreadInit() {
     athread_init();
