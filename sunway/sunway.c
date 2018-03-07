@@ -1,7 +1,13 @@
 //
 // Created by genshen on 2018-3-4.
 //
+
+/**
+ * in this file,we initial & clean athread environment.
+ */
+
 #include <stdio.h>
+#include "sunway.h"
 
 void sunwayAThreadInit() {
     athread_init();
