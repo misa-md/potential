@@ -5,10 +5,10 @@
 #include <cstdio>
 #include "athread_accelerate.h"
 
-void athreadAccelerateInit(int &lolocalx, int &lolocaly, int &lolocalz,
-                           int &nlocalx, int &nlocaly, int &nlocalz,
-                           int &loghostx, int &loghosty, int &loghostz,
-                           int &nghostx, int &nghosty, int &nghostz) {
+void athreadAccelerateInit(const int &lolocalx, const int &lolocaly, const int &lolocalz,
+                           const int &nlocalx, const int &nlocaly, const int &nlocalz,
+                           const int &loghostx, const int &loghosty, const int &loghostz,
+                           const int &nghostx, const int &nghosty, const int &nghost) {
     int func[9];
     func[0] = lolocalx - loghostx;
     func[1] = lolocaly - loghosty;
@@ -84,6 +84,6 @@ void athreadAccelerateEamForceCalc(int *phi_n, double *x, double *f, double *df,
     athread_join();
     __real_athread_spawn((void *) slave_cal_force2, func3);
     athread_join();
-    __real_athread_spawn((void*)slave_cal_force3,func3);
+    __real_athread_spawn((void *) slave_cal_force3, func3);
     athread_join();
 }
