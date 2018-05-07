@@ -11,12 +11,19 @@ extern "C" {
 
 // todo use c++ style.
 extern "C" void SLAVE_FUN(init)(int *);
+
 extern "C" void SLAVE_FUN(cal_rho1)(double *);
+
 extern "C" void SLAVE_FUN(cal_rho2)(double *);
+
 extern "C" void SLAVE_FUN(cal_df)(double *);
+
 extern "C" void SLAVE_FUN(cal_force1)(double *);
+
 extern "C" void SLAVE_FUN(cal_force2)(double *);
+
 extern "C" void SLAVE_FUN(cal_force3)(double *);
+
 extern "C" void SLAVE_FUN(init_spline)(double **);
 
 void athreadAccelerateInit(const int &lolocalx, const int &lolocaly, const int &lolocalz,
