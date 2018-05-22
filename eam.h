@@ -5,16 +5,13 @@
 #ifndef CRYSTAL_MD_EAM_H
 #define CRYSTAL_MD_EAM_H
 
-#include "eam_hpi.h"
-class H{
+#include "eam_phi.h"
 
-};
 class eam {
 public:
 
-    EamPhiList eam_phi; // pair potentials for N  types elements.
+    EamPhiList eam_phi; // pair potentials for N types elements.
 
-    InterpolationObject *phi;  //!< 对势
     InterpolationObject *rho;  //!< 电子云密度
     InterpolationObject *f;    //!< 嵌入能
 
@@ -22,7 +19,11 @@ public:
 
     ~eam();
 
-    void init(int nElems);
+    /**
+     * initialize elements count and initialize potential array with size {@var n_ele} types elements.
+     * @param n_ele
+     */
+    void initElementN(_type_atom_types n_ele);
 
     void eamBCast(int rank);
 
@@ -30,9 +31,7 @@ public:
 
     void initf(int i, int nRho, double x0, double dRho, double *buf);
 
-    void initphi(int i, int nR, double x0, double dR, double *buf) ;
-
-    void initrho(int i, int nR, double x0, double dR, double *buf) ;
+    void initrho(int i, int nR, double x0, double dR, double *buf);
 
     /*del*/
     void setatomicNo(double nAtomic);
@@ -50,7 +49,7 @@ public:
 
 private:
     bool has_initialized;
-    int _nElems; // the count of element types, which is initialized as 0.
+    _type_atom_types _nElems; // the count of element types, which is initialized as 0.
     // all kinds of atoms using the same cutoff.
     double cutoff;          //!< 截断半径
     double *mass;           //!< 质量

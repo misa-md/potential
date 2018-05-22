@@ -30,20 +30,21 @@ void InterpolationObject::bcastInterpolationObject(int rank) {
     kiwi::Bundle bundle = kiwi::Bundle();
     bundle.newPackBuffer(sizeof(int) + 2 * sizeof(double));
 
-    if (rank == 0) {
+    if (rank == MASTER_PROCESSOR) {
         bundle.put(n);
         bundle.put(x0);
         bundle.put(invDx);
     }
     MPI_Bcast(bundle.getPackedData(), bundle.getPackedDataCap(), MPI_BYTE,
               MASTER_PROCESSOR, kiwi::mpiUtils::global_comm);
-    if (rank != 0) {
+    if (rank != MASTER_PROCESSOR) {
         int cursor = 0;
         bundle.get(cursor, n);
         bundle.get(cursor, x0);
         bundle.get(cursor, invDx);
         values = new double[n + 1];
     }
+    bundle.releasePackBuffer();
     MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 

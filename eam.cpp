@@ -3,14 +3,14 @@
 //
 
 #include <utils/mpi_utils.h>
-#include <logs/logs.h>
+#include <cstring>
 #include "eam.h"
 
 eam::eam() : _nElems(0), has_initialized(false) {};
 
 eam::~eam() {
     delete[] f;
-    delete[] phi;
+//    delete[] phi;
     delete[] rho;
     delete[] mass; // fixme origin commented.
 };
@@ -39,23 +39,20 @@ void eam::setcutoff(double _cutoff) {
     cutoff = _cutoff;
 }
 
-void eam::init(int nElems) {
-    if (nElems > 0 && !has_initialized) { //  {@code _nElems == 0}  means eam have not been initialized.
-        _nElems = nElems;
-        f = new InterpolationObject[nElems];
-        phi = new InterpolationObject[nElems + nElems * (nElems - 1) / 2]; // self to self plus self to others
-        rho = new InterpolationObject[nElems];
-        mass = new double[nElems];
+void eam::initElementN(_type_atom_types n_ele) {
+    if (n_ele > 0 && !has_initialized) {
+        _nElems = n_ele;
+        eam_phi.setSize(n_ele);
+        f = new InterpolationObject[n_ele];  // todo delete?
+        //   phi = new InterpolationObject[n_ele + n_ele * (n_ele - 1) / 2]; // self to self plus self to others
+        rho = new InterpolationObject[n_ele];
+        mass = new double[n_ele];
         has_initialized = true;
     }
 }
 
 void eam::initf(int i, int nRho, double x0, double dRho, double *buf) {
     f[i].initInterpolationObject(nRho, x0, dRho, buf);
-}
-
-void eam::initphi(int i, int nR, double x0, double dR, double *buf) {
-    phi[i].initInterpolationObject(nR, x0, dR, buf);
 }
 
 void eam::initrho(int i, int nR, double x0, double dR, double *buf) {
@@ -65,7 +62,7 @@ void eam::initrho(int i, int nR, double x0, double dR, double *buf) {
 void eam::eamBCast(int rank) {
     MPI_Bcast(&_nElems, 1, MPI_INT, MASTER_PROCESSOR, MPI_COMM_WORLD);
     if (rank != MASTER_PROCESSOR) {
-        this->init(_nElems); // initialize array for storing eam data.
+        this->initElementN(_nElems); // initialize array for storing eam data.
     }
     MPI_Bcast(mass, _nElems, MPI_DOUBLE, MASTER_PROCESSOR, MPI_COMM_WORLD);
 
@@ -73,9 +70,7 @@ void eam::eamBCast(int rank) {
         rho[i].bcastInterpolationObject(rank);
         f[i].bcastInterpolationObject(rank);
     }
-    for (int i = 0; i < (_nElems + _nElems * (_nElems - 1) / 2); i++) {
-        phi[i].bcastInterpolationObject(rank);
-    }
+    eam_phi.sync(_nElems, rank);
 }
 
 void eam::interpolateFile() {
@@ -83,7 +78,5 @@ void eam::interpolateFile() {
         rho[i].interpolatefile();
         f[i].interpolatefile();
     }
-    for (int i = 0; i < (_nElems + _nElems * (_nElems - 1) / 2); i++) {
-        phi[i].interpolatefile();
-    }
+    eam_phi.interpolateAll();
 }

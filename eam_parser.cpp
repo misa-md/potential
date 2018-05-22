@@ -83,7 +83,7 @@ void EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
         buf[ii] *= hartreeToEv * bohrToAngs;
     }
     buf[0] = buf[1] + (buf[1] - buf[2]);
-    eam_instance->initphi(0, nR, x0, dR, buf);
+// fixme  eam_instance->initphi(0, nR, x0, dR, buf);
 
     // 读取电子云密度表
     for (int ii = 0; ii < nR; ++ii) {
@@ -107,7 +107,7 @@ void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
     int nElemTypes;
     sscanf(tmp, "%d", &nElemTypes); //原子类型个数
 
-    eam_instance->init(nElemTypes);// 从文件中读入原子类型个数后, 对势函数进行初始化.
+    eam_instance->initElementN(nElemTypes);// 从文件中读入原子类型个数后, 对势函数进行初始化.
 
     char *copy;
     copy = new char[strlen(tmp) + 1];
@@ -166,12 +166,14 @@ void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
         eam_instance->initrho(i, nR, x0, dR, buf);
     }
 
+
     //读取对势表
-    int i, j, k = 0;
+    int i, j;
     for (i = 0; i < nElemTypes; i++) {
         for (j = 0; j <= i; j++) {
             grab(potFile, nR, buf);
-            eam_instance->initphi(k++, nR, x0, dR, buf);
+            eam_instance->eam_phi.append(atom_type::getAtomTypeByNum(i), atom_type::getAtomTypeByNum(j),
+                                         nR, x0, dR, buf);
         }
     }
     delete[] buf;
