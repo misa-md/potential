@@ -10,7 +10,14 @@ public:
 
     ~InterpolationObject();
 
-    void initInterpolationObject(int _n, double _x0, double dx, double *data);
+    /**
+     *
+     * @param _n data count
+     * @param _x0 start point
+     * @param dx dx
+     * @param data data with size {@var n}
+     */
+    void initInterpolationObject(int _n, double _x0, double dx, double data[]);
 
     void bcastInterpolationObject(int rank);
 

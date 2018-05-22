@@ -16,7 +16,7 @@ InterpolationObject::~InterpolationObject() {
     delete[] spline;
 }
 
-void InterpolationObject::initInterpolationObject(int _n, double _x0, double dx, double *data) {
+void InterpolationObject::initInterpolationObject(int _n, double _x0, double dx, double data[]) {
     n = _n;
     values = new double[n + 1];
     invDx = 1.0 / dx;
@@ -47,9 +47,15 @@ void InterpolationObject::bcastInterpolationObject(int rank) {
     MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
+/**
+ * @see https://github.com/lammps/lammps/blob/stable_16Mar2018/src/MANYBODY/pair_eam.cpp#L745
+ * @see http://lammps.sandia.gov/threads/msg21496.html
+ */
 void InterpolationObject::interpolatefile() {
     spline = new double[n + 1][7];
-    for (int m = 1; m <= n; m++) spline[m][6] = values[m];
+    for (int m = 1; m <= n; m++) {
+        spline[m][6] = values[m];
+    }
 
     spline[1][5] = spline[2][6] - spline[1][6];
     spline[2][5] = 0.5 * (spline[3][6] - spline[1][6]);
