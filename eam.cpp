@@ -79,7 +79,7 @@ double eam::toForce(atom_type::atom_type type_from, atom_type::atom_type type_to
     double (*spline)[7];
 
     InterpolationObject *phi_spline = eam_phi.getPhiByEamPhiByType(type_from, type_to);
-    InterpolationObject *electron_spline = electron_density.getEamItemByType(atom_type::Fe); // todo which element type?
+    InterpolationObject *electron_spline = electron_density.getEamItemByType(type_from); // todo which element type?
 
     double r = sqrt(dist2);
     nr = phi_spline->n;
