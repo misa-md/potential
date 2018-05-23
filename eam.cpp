@@ -51,14 +51,6 @@ void eam::initElementN(_type_atom_types n_ele) {
     }
 }
 
-//void eam::initf(int i, int nRho, double x0, double dRho, double *buf) {
-//    embedded[i].initInterpolationObject(nRho, x0, dRho, buf);
-//}
-//
-//void eam::initrho(int i, int nR, double x0, double dR, double *buf) {
-//    electron_density[i].initInterpolationObject(nR, x0, dR, buf);
-//}
-
 void eam::eamBCast(int rank) {
     MPI_Bcast(&_nElems, 1, MPI_INT, MASTER_PROCESSOR, MPI_COMM_WORLD);
     if (rank != MASTER_PROCESSOR) {
