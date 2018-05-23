@@ -12,7 +12,6 @@ void EamPhiList::setSize(_type_atom_types n_types) {
 void EamPhiList::append(atom_type::atom_type type_from, atom_type::atom_type type_to,
                         int nR, double x0, double dr, double *buf) {
     unsigned int i = index(type_from, type_to);
-    kiwi::logs::s("eam", "passed>>>{} {} {} >>>>>\n", i, type_from, type_to);
     eamPhis[i].initInterpolationObject(nR, x0, dr, buf);
 }
 

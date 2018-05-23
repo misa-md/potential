@@ -70,7 +70,7 @@ void EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
     for (int ii = 0; ii < nRho; ++ii) {
         fscanf(potFile, "%lg", buf + ii);
     }
-    eam_instance->initf(0, nRho, x0, dRho, buf); //通过读取势文件的数据建立table
+//   fixme eam_instance->initf(0, nRho, x0, dRho, buf); //通过读取势文件的数据建立table
 
     // 读取对势表
     for (int ii = 0; ii < nR; ++ii) {
@@ -89,7 +89,7 @@ void EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
     for (int ii = 0; ii < nR; ++ii) {
         fscanf(potFile, "%lg", buf + ii);
     }
-    eam_instance->initrho(0, nR, x0, dR, buf);
+//  fixme  eam_instance->initrho(0, nR, x0, dR, buf);
 
     delete[] buf;
 }
@@ -159,11 +159,11 @@ void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
 
         // 读取嵌入能表
         grab(potFile, nRho, buf);
-        eam_instance->initf(i, nRho, x0, dRho, buf);
+        eam_instance->embedded.append(atom_type::getAtomTypeByNum(i), nRho, x0, dRho, buf);
 
         // 读取电子云密度表
         grab(potFile, nR, buf);
-        eam_instance->initrho(i, nR, x0, dR, buf);
+        eam_instance->electron_density.append(atom_type::getAtomTypeByNum(i), nR, x0, dR, buf);
     }
 
 

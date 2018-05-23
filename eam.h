@@ -6,14 +6,15 @@
 #define CRYSTAL_MD_EAM_H
 
 #include "eam_phi.h"
+#include "eam_one_way.h"
 
 class eam {
 public:
 
     EamPhiList eam_phi; // pair potentials for N types elements.
 
-    InterpolationObject *rho;  //!< 电子云密度
-    InterpolationObject *f;    //!< 嵌入能
+    OneWayEamList electron_density;  //!< 电子云密度
+    OneWayEamList embedded;    //!< 嵌入能
 
     eam();
 
@@ -29,9 +30,26 @@ public:
 
     void interpolateFile();
 
-    void initf(int i, int nRho, double x0, double dRho, double *buf);
+    double toForce(atom_type::atom_type type_from, atom_type::atom_type type_to,
+                   double dist2, double df_sum);
 
-    void initrho(int i, int nR, double x0, double dR, double *buf);
+    /**
+     * compute the contribution to electron charge density from atom j of type {@var _atom_type} at location of one atom i.
+     * whose distance is specified by {@var dist2}
+     * @param _atom_type atom type of atom j.
+     * @param dist2 the square of the distance between atom i and atom j.
+     * @return the contribution to electron charge density from atom j.
+     */
+    double rhoContribution(atom_type::atom_type _atom_type, double dist2);
+
+    /**
+     * compute embedded energy of atom of type {@var _atom_type},
+     * whose electron charge density contributed by its neighbor atoms is specified by {@var rho}.
+     * @param _atom_type atom type
+     * @param rho  electron charge density contributed by all its neighbor atoms.
+     * @return embedded energy of this atom.
+     */
+    double embedEnergyContribution(atom_type::atom_type _atom_type, double rho);
 
     /*del*/
     void setatomicNo(double nAtomic);
