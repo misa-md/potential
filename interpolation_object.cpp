@@ -44,7 +44,7 @@ void InterpolationObject::bcastInterpolationObject(int rank) {
         bundle.get(cursor, invDx);
         values = new double[n + 1];
     }
-    bundle.releasePackBuffer();
+    bundle.freePackBuffer();
     MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
