@@ -6,7 +6,7 @@
 #define CRYSTAL_MD_EAM_HPI_H
 
 #include <vector>
-#include "../atom/atom_types.h"
+#include "../config/atom_types.h"
 #include "interpolation_object.h"
 
 

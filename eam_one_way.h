@@ -7,8 +7,8 @@
 
 #include <vector>
 #include "interpolation_object.h"
-#include "../pre_define.h"
-#include "../atom/atom_types.h"
+#include "../config/pre_define.h"
+#include "../config/atom_types.h"
 
 class OneWayEam : public InterpolationObject {
 
