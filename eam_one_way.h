@@ -7,8 +7,8 @@
 
 #include <vector>
 #include "interpolation_object.h"
-#include "../config/pre_define.h"
-#include "../config/atom_types.h"
+#include "../types/pre_define.h"
+#include "../types/atom_types.h"
 
 class OneWayEam : public InterpolationObject {
 
@@ -25,7 +25,7 @@ public:
 
     void append(atom_type::atom_type ele_type, OneWayEam &eam_item);
 
-    void sync(int rank); // this methos must be called after calling {@func setSize}.
+    void sync(int rank); // this method must be called after calling {@func setSize}.
 
     /**
      * initialize  vector {@var eamPhis}, and sync to other processors.

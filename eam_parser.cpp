@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include <cstring>
-#include <cstdio>
+#include <cstdlib>
 #include <logs/logs.h>
 
 #include "eam_parser.h"
