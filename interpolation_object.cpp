@@ -6,6 +6,8 @@
 #include <utils/mpi_utils.h>
 
 #include "interpolation_object.h"
+#include "../utils/mpi_domain.h"
+#include "../types/pre_define.h"
 
 InterpolationObject::InterpolationObject() {
     values = nullptr;
@@ -36,7 +38,7 @@ void InterpolationObject::bcastInterpolationObject(int rank) {
         bundle.put(invDx);
     }
     MPI_Bcast(bundle.getPackedData(), bundle.getPackedDataCap(), MPI_BYTE,
-              MASTER_PROCESSOR, kiwi::mpiUtils::global_comm);
+              MASTER_PROCESSOR, MPIDomain::sim_processor.comm);
     if (rank != MASTER_PROCESSOR) {
         int cursor = 0;
         bundle.get(cursor, n);
