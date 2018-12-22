@@ -27,7 +27,7 @@ public:
 
     static const array_map::type_map_size INDEX_UN_LIMITED = USHRT_MAX;
 
-    // insert data and return the inserted index.
+    // insert data and return the index inserted.
     array_map::type_map_size insert(K const key, V const value);
 
     // return the reference of the element specified by key.
@@ -66,8 +66,7 @@ array_map::type_map_size ArrayMap<K, V>::insert(const K key, const V value) {
     if (index(key) == INDEX_UN_LIMITED) {
         keys[_size] = key;
         elements[_size] = value;
-        _size++;
-        return _size;
+        return _size++;
     } else {
         elements[i] = value;
         return i;
