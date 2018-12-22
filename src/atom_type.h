@@ -7,6 +7,7 @@
 
 #include <mpi.h>
 #include <string>
+#include <climits>
 
 namespace atom_type {
     typedef unsigned short _type_prop_key;
@@ -16,6 +17,7 @@ namespace atom_type {
 
     const MPI_Datatype MPI_TYPE_TYPES = MPI_SHORT; // mpi type of type _type_atom_types.
 
+    const _type_prop_key PropKeyMax = USHRT_MAX;
     /**
      * definition of lattice properties.
      */
@@ -30,17 +32,17 @@ namespace atom_type {
     };
 
     // pre defined lattice prop.
-    const AtomProp atom_props_list[] = {
+/*    const AtomProp atom_props_list[] = {
             AtomProp{26, 26, "Fe", 55.845},
-            AtomProp{26, 26, "Cu", 63.546},
-            AtomProp{26, 26, "Mn", 54.938043},
-            AtomProp{26, 26, "Ni", 58.6934},
+            AtomProp{29, 29, "Cu", 63.546},
+            AtomProp{25, 25, "Mn", 54.938043},
+            AtomProp{28, 28, "Ni", 58.6934},
     };
 
     const AtomProp &Fe = atom_props_list[0];
     const AtomProp &Cu = atom_props_list[1];
     const AtomProp &Ni = atom_props_list[2];
     const AtomProp &Mn = atom_props_list[3];
-
+*/
 }
 #endif //POT_ATOM_TYPE_H

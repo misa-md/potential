@@ -10,7 +10,8 @@ set(TEST_HEADER_FILES
 
 set(TEST_SOURCE_FILES
         main.cpp
-        app_test.cpp
+        data_structure/array_map_test.cpp
+        atom_type_lists_test.cpp
         )
 
 # set binary path and lib storage path wile compiling process.

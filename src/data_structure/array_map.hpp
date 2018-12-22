@@ -2,10 +2,11 @@
 // Created by genshen on 2018-12-22.
 //
 
-#ifndef POT_MIN_MAP_H
-#define POT_MIN_MAP_H
+#ifndef POT_ARRAY_MAP_H
+#define POT_ARRAY_MAP_H
 
 #include <vector>
+#include <climits>
 
 /**
  * Map implementation also can be indexed as array index.
@@ -27,7 +28,7 @@ public:
 
     static const array_map::type_map_size INDEX_UN_LIMITED = USHRT_MAX;
 
-    // insert data and return the inserted index.
+    // insert data and return the index inserted.
     array_map::type_map_size insert(K const key, V const value);
 
     // return the reference of the element specified by key.
@@ -66,8 +67,7 @@ array_map::type_map_size ArrayMap<K, V>::insert(const K key, const V value) {
     if (index(key) == INDEX_UN_LIMITED) {
         keys[_size] = key;
         elements[_size] = value;
-        _size++;
-        return _size;
+        return _size++;
     } else {
         elements[i] = value;
         return i;
@@ -100,4 +100,4 @@ const array_map::type_map_size ArrayMap<K, V>::size() {
 }
 
 
-#endif //POT_MIN_MAP_H
+#endif //POT_ARRAY_MAP_H
