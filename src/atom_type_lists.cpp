@@ -3,8 +3,10 @@
 //
 
 #include <mpi.h>
-#include "eam.h"
 #include "atom_type_lists.h"
+
+const atom_type::_type_prop_key AtomPropsList::KeyPropNotFound = atom_type::PropKeyMax;
+const atom_type::_type_prop_key AtomPropsList::KeyPropExists = atom_type::PropKeyMax - 1;
 
 atom_type::_type_prop_key AtomPropsList::addAtomProp(const atom_type::AtomProp &lp) {
     CHECK_EXIST_OR_RETURN(lp.id, LatPropExists);
@@ -34,7 +36,7 @@ atom_type::_type_atom_index AtomPropsList::getIndex(const atom_type::_type_prop_
         }
         i++;
     }
-    return i;
+    return LatPropExists;
 }
 
 void AtomPropsList::sync(const int root, const int rank, MPI_Comm comm, const size_t size) {

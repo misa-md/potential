@@ -6,6 +6,7 @@
 #define POT_MIN_MAP_H
 
 #include <vector>
+#include <climits>
 
 /**
  * Map implementation also can be indexed as array index.

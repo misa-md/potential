@@ -5,8 +5,7 @@
 #ifndef POT_ATOM_TYPE_LISTS_H
 #define POT_ATOM_TYPE_LISTS_H
 
-
-#include "eam_phi.h"
+#include <vector>
 #include "atom_type.h"
 
 #define CHECK_EXIST_OR_RETURN(ID, RT) \
@@ -19,8 +18,7 @@ for (const atom_type::AtomProp &lp :lat_props) { \
 class AtomPropsList {
 public:
 
-    static const atom_type::_type_atomic_no LatPropNotFound = 0;
-    static const atom_type::_type_prop_key LatPropExists = 0;
+    static const atom_type::_type_prop_key LatPropNotFound;
 
     inline static atom_type::_type_prop_key calcPropId(atom_type::_type_atomic_no no) {
         return no;
