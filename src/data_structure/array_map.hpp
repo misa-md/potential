@@ -2,8 +2,8 @@
 // Created by genshen on 2018-12-22.
 //
 
-#ifndef POT_MIN_MAP_H
-#define POT_MIN_MAP_H
+#ifndef POT_ARRAY_MAP_H
+#define POT_ARRAY_MAP_H
 
 #include <vector>
 #include <climits>
@@ -100,4 +100,4 @@ const array_map::type_map_size ArrayMap<K, V>::size() {
 }
 
 
-#endif //POT_MIN_MAP_H
+#endif //POT_ARRAY_MAP_H

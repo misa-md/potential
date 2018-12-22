@@ -50,7 +50,8 @@ public:
     void sync(const int root, const int rank, MPI_Comm comm);
 
     /**
-     * initialize  vector {@var eamPhis}, and sync to other processors.
+     * @deprecated
+     * initialize vector {@var eamPhis}, and sync to other processors.
      * @param n_types the size of elements.
      * @param root the root processor.
      * @param rank MPI rank id of current processor.

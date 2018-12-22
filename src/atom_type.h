@@ -34,9 +34,9 @@ namespace atom_type {
     // pre defined lattice prop.
 /*    const AtomProp atom_props_list[] = {
             AtomProp{26, 26, "Fe", 55.845},
-            AtomProp{26, 26, "Cu", 63.546},
-            AtomProp{26, 26, "Mn", 54.938043},
-            AtomProp{26, 26, "Ni", 58.6934},
+            AtomProp{29, 29, "Cu", 63.546},
+            AtomProp{25, 25, "Mn", 54.938043},
+            AtomProp{28, 28, "Ni", 58.6934},
     };
 
     const AtomProp &Fe = atom_props_list[0];

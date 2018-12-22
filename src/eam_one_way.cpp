@@ -25,12 +25,8 @@ void OneWayEamList::sync(const int root, const int rank, MPI_Comm comm) {
     }
 }
 
-// fixme
 void OneWayEamList::sync(atom_type::_type_atom_types n_types,
                          const int root, const int rank, MPI_Comm comm) {
-//    if (this->n_types != n_types && eamItems.size() == 0) {
-//        setSize(n_types);
-//    }
     sync(root, rank, comm);
 }
 
