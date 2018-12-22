@@ -1,6 +1,6 @@
 set(CMAKE_CXX_STANDARD 11)
 # all variables here start with "M_"
-set(M_VERSION "0.2.0")
+set(POT_VERSION "0.2.0")
 set(AppName pot)
 
 #############
@@ -17,7 +17,7 @@ option(TEST_MPI_ENABLE_FLAG "Enable MPI in test" ON) # enable mpi in test, its v
 option(DEBUG_ENABLE_FLAG "Enable tools building" ON) # enable debug mode building.
 
 ## architecture ralated values.
-# option(ARCH_SW "Enable sunway athread" OFF) # enable sunway athread if its running on sunway system.
+option(POT_ARCH_SW "Enable sunway athread" OFF) # enable sunway athread if its running on sunway system.
 
 if (DEBUG_ENABLE_FLAG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
