@@ -1,17 +1,28 @@
+# configure a header file to pass some of the CMake settings to the source code
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/building_config.h.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/building_config.h"
+)
+
 set(HEADER_FILES
+        atom_type.h
+        atom_type_lists.h
         eam_one_way.h
         eam_parser.h
         eam_phi.h
         eam.h
         interpolation_object.h
+        utils.h
         )
 
 set(SOURCE_FILES
+        atom_type_lists.cpp
         eam_one_way.cpp
         eam_parser.cpp
         eam_phi.cpp
         eam.cpp
         interpolation_object.cpp
+        data_structure/array_map.hpp
         )
 
 # set(MAIN_FILE main.cpp)

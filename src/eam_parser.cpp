@@ -1,9 +1,9 @@
 #include <mpi.h>
 #include <cstring>
 #include <cstdlib>
-#include <logs/logs.h>
 
 #include "eam_parser.h"
+#include "utils.h"
 
 EamParser::EamParser(const std::string &potential_filename, const std::string &file_type)
         : potential_filename(potential_filename), file_type(file_type) {
@@ -16,42 +16,39 @@ bool EamParser::parse(eam *eam_instance) {
         sprintf(tmp, "%s", potential_filename.c_str());
         FILE *potFile = fopen(tmp, "r");
         if (potFile == nullptr) {
-            kiwi::logs::e("eam", "open file {} failed.\n", potential_filename);
+            printf("error, open file %s failed.\n", potential_filename.c_str());
             return false;
         }
-        parseEamFuncfl(eam_instance, potFile);
+        parseEamFuncfl(eam_instance, potFile); // fixme return.
     } else if (file_type == "setfl") {
         char tmp[4096];
         sprintf(tmp, "%s", potential_filename.c_str());
 
         FILE *potFile = fopen(tmp, "r");
         if (potFile == nullptr) {
-            kiwi::logs::e("eam", "open file {} failed.\n", potential_filename);
+            printf("error, open file %s failed.\n", potential_filename.c_str());
             return false;
         }
-        parseEamSetfl(eam_instance, potFile);
+        parseEamSetfl(potFile);
     }
     return true;
 }
 
-void EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
+// todo use newInstance to create eam object.
+eam *EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
     // 第一行
     char tmp[4096];
     fgets(tmp, sizeof(tmp), potFile);
     char name[3];
     sscanf(tmp, "%s", name);
-    eam_instance->setname(name);
 
     // 第二行
-    int nAtomic;
+    atom_type::_type_atomic_no nAtomic;
     double mass, lat;
     char latticeType[8];
     fgets(tmp, sizeof(tmp), potFile);
     sscanf(tmp, "%d %le %le %s", &nAtomic, &mass, &lat, latticeType);
 
-    eam_instance->setatomicNo(nAtomic); // 原子序号
-    eam_instance->setlat(lat); // 晶格常数
-    eam_instance->setmass(0, mass); // 质量.
     eam_instance->setlatticeType(latticeType); //晶格类型
 
     // 第三行
@@ -59,7 +56,7 @@ void EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
     double dRho, dR, cutoff;
     fgets(tmp, sizeof(tmp), potFile);
     sscanf(tmp, "%d %le %d %le %le", &nRho, &dRho, &nR, &dR, &cutoff);
-    eam_instance->setcutoff(cutoff); //截断半径
+    eam_instance->type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff);
     double x0 = 0.0;
 
     // 申请读取数据的空间
@@ -92,10 +89,11 @@ void EamParser::parseEamFuncfl(eam *eam_instance, FILE *potFile) {
 //  fixme  eam_instance->initrho(0, nR, x0, dR, buf);
 
     delete[] buf;
+    return eam_instance;
 }
 
 
-void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
+eam *EamParser::parseEamSetfl(FILE *potFile) {
     char tmp[4096];
     // 前三行为注释
     fgets(tmp, sizeof(tmp), potFile);
@@ -107,7 +105,10 @@ void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
     int nElemTypes;
     sscanf(tmp, "%d", &nElemTypes); //原子类型个数
 
-    eam_instance->initElementN(nElemTypes);// 从文件中读入原子类型个数后, 对势函数进行初始化.
+//    eam_instance->initElementN(nElemTypes);// 从文件中读入原子类型个数后, 对势函数进行初始化.
+// todo delete.
+    eam *eam_instance = eam::newInstance(nElemTypes, POT_MASTER_PROCESSOR, 0,
+                                         MPI_COMM_WORLD); // fixme: set rank and comm
 
     char *copy;
     copy = new char[strlen(tmp) + 1];
@@ -124,7 +125,7 @@ void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
     int nwords = n;
     delete[] copy;
     if (nwords != nElemTypes + 1) {
-        kiwi::logs::e("eam", "Incorrect element names in EAM potential file!");
+        printf("Incorrect element names in EAM potential file!");
         // todo MPI abort.
     }
 
@@ -141,42 +142,43 @@ void EamParser::parseEamSetfl(eam *eam_instance, FILE *potFile) {
     // 所有原子使用同一个截断半径
     fgets(tmp, sizeof(tmp), potFile);
     sscanf(tmp, "%d %le %d %le %le", &nRho, &dRho, &nR, &dR, &cutoff);
-    eam_instance->setcutoff(cutoff);
 
     // 申请读取数据空间
     int bufSize = std::max(nRho, nR);
     double *buf = new double[bufSize];
     double x0 = 0.0; // fixme start from 0 ??
+    atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[nElemTypes];
     // 每种原子信息
     for (int i = 0; i < nElemTypes; i++) {
         fgets(tmp, sizeof(tmp), potFile);
-        int nAtomic;
-        double mass, lat;
-        char latticeType[8];
-        sscanf(tmp, "%d %le %le %s", &nAtomic, &mass, &lat, latticeType);
-
-        eam_instance->setmass(i, mass);  // 原子质量
+        atom_type::_type_atomic_no nAtomic;
+        double mass, lat; // mass, lattice const
+        char latticeType[8]; // lattice type.
+        sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
+        atom_type::_type_prop_key key = eam_instance->type_lists.addAtomProp(nAtomic, "", mass, lat,
+                                                                             cutoff); // todo ele name
+        prop_key_list[i] = key;
 
         // 读取嵌入能表
         grab(potFile, nRho, buf);
-        eam_instance->embedded.append(atom_type::getAtomTypeByNum(i), nRho, x0, dRho, buf);
+        eam_instance->embedded.append(key, nRho, x0, dRho, buf);
 
         // 读取电子云密度表
         grab(potFile, nR, buf);
-        eam_instance->electron_density.append(atom_type::getAtomTypeByNum(i), nR, x0, dR, buf);
+        eam_instance->electron_density.append(key, nR, x0, dR, buf);
     }
-
 
     //读取对势表
     int i, j;
     for (i = 0; i < nElemTypes; i++) {
         for (j = 0; j <= i; j++) {
             grab(potFile, nR, buf);
-            eam_instance->eam_phi.append(atom_type::getAtomTypeByNum(i), atom_type::getAtomTypeByNum(j),
-                                         nR, x0, dR, buf);
+            eam_instance->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
         }
     }
     delete[] buf;
+    delete[] prop_key_list;
+    return eam_instance;
 }
 
 void EamParser::grab(FILE *fptr, int n, double *list) {

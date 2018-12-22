@@ -2,65 +2,54 @@
 // Created by genshen on 5/21/18.
 //
 
-#include <utils/mpi_utils.h>
+#include <mpi.h>
 #include <cstring>
 #include <cmath>
 #include "eam.h"
+#include "utils.h"
 
-eam::eam() : _nElems(0), has_initialized(false) {};
+eam *eam::newInstance(atom_type::_type_atom_types n_ele,
+                      const int root, const int rank, MPI_Comm comm) {
+    // broadcast element count/size.
+    MPI_Bcast(&n_ele, 1, atom_type::MPI_TYPE_TYPES, root, comm);
+    return new eam(n_ele); // todo delete
+}
+
+eam::eam(const atom_type::_type_atom_types n_ele)
+        : eam_phi(n_ele), electron_density(n_ele), embedded(n_ele),
+          _nElems(n_ele) {}
 
 eam::~eam() {
 //    delete[] embedded;
 //    delete[] phi;
 //    delete[] electron_density;
-    delete[] mass; // fixme origin commented.
 };
-
-void eam::setatomicNo(double nAtomic) {
-    atomicNo = nAtomic;
-}
-
-void eam::setlat(double latticeconst) {
-    lat = latticeconst;
-}
-
-void eam::setmass(int i, double _mass) {
-    mass[i] = _mass;
-}
 
 void eam::setlatticeType(char *_latticeType) {
     strcpy(latticeType, _latticeType);
 }
 
-void eam::setname(char *_name) {
-    strcpy(name, _name);
-}
+//void eam::initElementN(_type_atom_types n_ele) {
+//    if (n_ele > 0 && !has_initialized) {
+//        _nElems = n_ele;
+//        eam_phi.setSize(n_ele);
+//        embedded.setSize(n_ele);
+//        electron_density.setSize(n_ele);
+//        mass = new double[n_ele]; // todo delete?
+//        has_initialized = true;
+//    }
+//}
 
-void eam::setcutoff(double _cutoff) {
-    cutoff = _cutoff;
-}
-
-void eam::initElementN(_type_atom_types n_ele) {
-    if (n_ele > 0 && !has_initialized) {
-        _nElems = n_ele;
-        eam_phi.setSize(n_ele);
-        embedded.setSize(n_ele);
-        electron_density.setSize(n_ele);
-        mass = new double[n_ele]; // todo delete?
-        has_initialized = true;
-    }
-}
-
-void eam::eamBCast(int rank) {
-    MPI_Bcast(&_nElems, 1, MPI_INT, MASTER_PROCESSOR, MPI_COMM_WORLD);
-    if (rank != MASTER_PROCESSOR) {
-        this->initElementN(_nElems); // initialize array for storing eam data.
-    }
-    MPI_Bcast(mass, _nElems, MPI_DOUBLE, MASTER_PROCESSOR, MPI_COMM_WORLD);
-
-    electron_density.sync(_nElems, rank);
-    embedded.sync(_nElems, rank);
-    eam_phi.sync(_nElems, rank);
+void eam::eamBCast(const int root, const int rank, MPI_Comm comm) {
+//    MPI_Bcast(&_nElems, 1, MPI_INT, POT_MASTER_PROCESSOR, MPI_COMM_WORLD);
+//    if (rank != POT_MASTER_PROCESSOR) {
+//        this->initElementN(_nElems); // initialize array for storing eam data.
+//    }
+//    MPI_Bcast(mass, _nElems, MPI_DOUBLE, POT_MASTER_PROCESSOR, MPI_COMM_WORLD);
+    type_lists.sync(root, rank, comm, _nElems); // todo the list size
+    electron_density.sync(_nElems, root, rank, comm);
+    embedded.sync(_nElems, root, rank, comm);
+    eam_phi.sync(_nElems, root, rank, comm);
 }
 
 void eam::interpolateFile() {
@@ -69,7 +58,7 @@ void eam::interpolateFile() {
     eam_phi.interpolateAll();
 }
 
-double eam::toForce(atom_type::atom_type type_from, atom_type::atom_type type_to,
+double eam::toForce(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to,
                     double dist2, double df_sum) {
     int nr, m;
     double p;
@@ -106,7 +95,7 @@ double eam::toForce(atom_type::atom_type type_from, atom_type::atom_type type_to
     return fpair;
 }
 
-double eam::rhoContribution(atom_type::atom_type _atom_type, double dist2) {
+double eam::rhoContribution(atom_type::_type_prop_key _atom_type, double dist2) {
     InterpolationObject *electron_spline = electron_density.getEamItemByType(_atom_type);
 
     double r = sqrt(dist2);
@@ -121,7 +110,7 @@ double eam::rhoContribution(atom_type::atom_type _atom_type, double dist2) {
 
 }
 
-double eam::embedEnergyContribution(atom_type::atom_type _atom_type, double rho) {
+double eam::embedEnergyContribution(atom_type::_type_prop_key _atom_type, double rho) {
     InterpolationObject *embed = embedded.getEamItemByType(_atom_type);
     int nr = embed->n;
     double p = rho * embed->invDx + 1.0;

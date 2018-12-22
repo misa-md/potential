@@ -7,8 +7,12 @@
 
 #include "eam_phi.h"
 #include "eam_one_way.h"
+#include "atom_type.h"
+#include "atom_type_lists.h"
 
 class eam {
+    friend class EamParser;
+
 public:
 
     EamPhiList eam_phi; // pair potentials for N types elements.
@@ -16,21 +20,30 @@ public:
     OneWayEamList electron_density;  //!< 电子云密度
     OneWayEamList embedded;    //!< 嵌入能
 
-    eam();
+    /**
+     * create a new eam instance by the elements count from root processor with size {@var n_ele} types elements.
+     * @param n_ele atom elements count, only rank @param root is correct(other processors are zero values).
+     * @param root the root processor which has the correct element count @param n_ele.
+     * @param rank current processor rank.
+     * @param comm mpi communicator.
+     * @return eam instance.
+     */
+    static eam *newInstance(atom_type::_type_atom_types n_ele,
+                            const int root, const int rank, MPI_Comm comm);
+
+    /**
+     * count/size of atom elements.
+     * @param n_ele
+     */
+    explicit eam(const atom_type::_type_atom_types n_ele);
 
     ~eam();
 
-    /**
-     * initialize elements count and initialize potential array with size {@var n_ele} types elements.
-     * @param n_ele
-     */
-    void initElementN(_type_atom_types n_ele);
-
-    void eamBCast(int rank);
+    void eamBCast(const int root, const int rank, MPI_Comm comm);
 
     void interpolateFile();
 
-    double toForce(atom_type::atom_type type_from, atom_type::atom_type type_to,
+    double toForce(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to,
                    double dist2, double df_sum);
 
     /**
@@ -40,7 +53,7 @@ public:
      * @param dist2 the square of the distance between atom i and atom j.
      * @return the contribution to electron charge density from atom j.
      */
-    double rhoContribution(atom_type::atom_type _atom_type, double dist2);
+    double rhoContribution(atom_type::_type_prop_key _atom_type, double dist2);
 
     /**
      * compute embedded energy of atom of type {@var _atom_type},
@@ -49,32 +62,20 @@ public:
      * @param rho  electron charge density contributed by all its neighbor atoms.
      * @return embedded energy of this atom.
      */
-    double embedEnergyContribution(atom_type::atom_type _atom_type, double rho);
+    double embedEnergyContribution(atom_type::_type_prop_key _atom_type, double rho);
 
     /*del*/
-    void setatomicNo(double nAtomic);
-
-    void setlat(double latticeconst);
-
-    void setmass(int i, double _mass);
-
     void setlatticeType(char *_latticeType);
-
-    void setname(char *_name);
-
-    void setcutoff(double _cutoff);
     /*/del*/
 
+protected:
+    AtomPropsList type_lists; // all types are saved in this object.
 private:
     bool has_initialized;
-    _type_atom_types _nElems; // the count of element types, which is initialized as 0.
+    const atom_type::_type_atom_types _nElems; // the count of element types, which is initialized as 0.
     // all kinds of atoms using the same cutoff.
-    double cutoff;          //!< 截断半径
-    double *mass;           //!< 质量
-    double lat;             //!< 晶格常数
     char latticeType[8];    //!< 晶格类型
-    char name[3];       //!< 元素名
-    int atomicNo;       //!< 元素序号
+
 };
 
 #endif //CRYSTAL_MD_EAM_H

@@ -4,6 +4,8 @@
 #ifndef CRYSTAL_MD_INTERPOLATION_OBJECT_H
 #define CRYSTAL_MD_INTERPOLATION_OBJECT_H
 
+#include <mpi.h>
+
 class InterpolationObject {
 public:
     InterpolationObject();
@@ -19,7 +21,7 @@ public:
      */
     void initInterpolationObject(int _n, double _x0, double dx, double data[]);
 
-    void bcastInterpolationObject(int rank);
+    void bcastInterpolationObject(const int root, const int rank, MPI_Comm comm);
 
     void interpolatefile();
 
