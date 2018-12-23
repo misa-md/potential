@@ -8,24 +8,24 @@
 #include "eam.h"
 #include "utils.h"
 
-eam *eam::newInstance(atom_type::_type_atom_types n_ele,
+eam *eam::newInstance(atom_type::_type_atom_types n_ele_root,
                       const int root, const int rank, MPI_Comm comm) {
     // broadcast element count/size.
-    MPI_Bcast(&n_ele, 1, atom_type::MPI_TYPE_TYPES, root, comm);
-    return new eam(n_ele); // todo delete
+    MPI_Bcast(&n_ele_root, 1, atom_type::MPI_TYPE_TYPES, root, comm);
+    return new eam(n_ele_root); // todo delete
 }
 
 eam::eam(const atom_type::_type_atom_types n_ele)
-        : eam_phi(n_ele), electron_density(n_ele), embedded(n_ele), _nElems(n_ele) {}
+        : eam_phi(n_ele), electron_density(n_ele), embedded(n_ele), _n_eles(n_ele) {}
 
 void eam::setlatticeType(char *_latticeType) {
     strcpy(latticeType, _latticeType);
 }
 
 void eam::eamBCast(const int root, const int rank, MPI_Comm comm) {
-    electron_density.sync(_nElems, root, rank, comm);
-    embedded.sync(_nElems, root, rank, comm);
-    eam_phi.sync(_nElems, root, rank, comm);
+    electron_density.sync(_n_eles, root, rank, comm);
+    embedded.sync(_n_eles, root, rank, comm);
+    eam_phi.sync(_n_eles, root, rank, comm);
 }
 
 void eam::interpolateFile() {

@@ -64,6 +64,7 @@ public:
 
     /**
      * broadcast list to other processor.
+     * @note @param size must be the same on all processors.
      * @param master master processor.
      * @param rank current rank id.
      * @param comm MPI Communicators

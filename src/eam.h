@@ -20,13 +20,13 @@ public:
 
     /**
      * create a new eam instance by the elements count from root processor with size {@var n_ele} types elements.
-     * @param n_ele atom elements count, only rank @param root is correct(other processors are zero values).
+     * @param n_ele atom elements count on root processor, only rank @param root is correct(other processors are zero values).
      * @param root the root processor which has the correct element count @param n_ele.
      * @param rank current processor rank.
      * @param comm mpi communicator.
      * @return eam instance.
      */
-    static eam *newInstance(atom_type::_type_atom_types n_ele,
+    static eam *newInstance(atom_type::_type_atom_types n_ele_root,
                             const int root, const int rank, MPI_Comm comm);
 
     /**
@@ -67,8 +67,16 @@ public:
      */
     void setlatticeType(char *_latticeType);
 
+    /**
+     * get the elements count involved in.
+     * @return elements count.
+     */
+    inline atom_type::_type_atom_types geEles() const{
+        return _n_eles;
+    }
+
 private:
-    const atom_type::_type_atom_types _nElems; // the count of element types, which is initialized as 0.
+    const atom_type::_type_atom_types _n_eles; // the count of element types, which is initialized as 0.
     // all kinds of atoms using the same cutoff.
     char latticeType[8];    //!< 晶格类型  @deprecated
 };
