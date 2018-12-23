@@ -8,48 +8,24 @@
 #include "eam.h"
 #include "utils.h"
 
-eam *eam::newInstance(atom_type::_type_atom_types n_ele,
+eam *eam::newInstance(atom_type::_type_atom_types n_ele_root,
                       const int root, const int rank, MPI_Comm comm) {
     // broadcast element count/size.
-    MPI_Bcast(&n_ele, 1, atom_type::MPI_TYPE_TYPES, root, comm);
-    return new eam(n_ele); // todo delete
+    MPI_Bcast(&n_ele_root, 1, atom_type::MPI_TYPE_TYPES, root, comm);
+    return new eam(n_ele_root); // todo delete
 }
 
 eam::eam(const atom_type::_type_atom_types n_ele)
-        : eam_phi(n_ele), electron_density(n_ele), embedded(n_ele),
-          _nElems(n_ele) {}
-
-eam::~eam() {
-//    delete[] embedded;
-//    delete[] phi;
-//    delete[] electron_density;
-};
+        : eam_phi(n_ele), electron_density(n_ele), embedded(n_ele), _n_eles(n_ele) {}
 
 void eam::setlatticeType(char *_latticeType) {
     strcpy(latticeType, _latticeType);
 }
 
-//void eam::initElementN(_type_atom_types n_ele) {
-//    if (n_ele > 0 && !has_initialized) {
-//        _nElems = n_ele;
-//        eam_phi.setSize(n_ele);
-//        embedded.setSize(n_ele);
-//        electron_density.setSize(n_ele);
-//        mass = new double[n_ele]; // todo delete?
-//        has_initialized = true;
-//    }
-//}
-
 void eam::eamBCast(const int root, const int rank, MPI_Comm comm) {
-//    MPI_Bcast(&_nElems, 1, MPI_INT, POT_MASTER_PROCESSOR, MPI_COMM_WORLD);
-//    if (rank != POT_MASTER_PROCESSOR) {
-//        this->initElementN(_nElems); // initialize array for storing eam data.
-//    }
-//    MPI_Bcast(mass, _nElems, MPI_DOUBLE, POT_MASTER_PROCESSOR, MPI_COMM_WORLD);
-    type_lists.sync(root, rank, comm, _nElems); // todo the list size
-    electron_density.sync(_nElems, root, rank, comm);
-    embedded.sync(_nElems, root, rank, comm);
-    eam_phi.sync(_nElems, root, rank, comm);
+    electron_density.sync(_n_eles, root, rank, comm);
+    embedded.sync(_n_eles, root, rank, comm);
+    eam_phi.sync(_n_eles, root, rank, comm);
 }
 
 void eam::interpolateFile() {
@@ -58,8 +34,8 @@ void eam::interpolateFile() {
     eam_phi.interpolateAll();
 }
 
-double eam::toForce(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to,
-                    double dist2, double df_sum) {
+double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
+                    const double dist2, const double df_sum) {
     int nr, m;
     double p;
     double fpair;
@@ -67,8 +43,8 @@ double eam::toForce(atom_type::_type_prop_key type_from, atom_type::_type_prop_k
     double recip, phi, phip, psip, z2, z2p;
     double (*spline)[7];
 
-    InterpolationObject *phi_spline = eam_phi.getPhiByEamPhiByType(type_from, type_to);
-    InterpolationObject *electron_spline = electron_density.getEamItemByType(type_from); // todo which element type?
+    InterpolationObject *phi_spline = eam_phi.getPhiByEamPhiByType(key_from, key_to);
+    InterpolationObject *electron_spline = electron_density.getEamItemByType(key_from); // todo which element type?
 
     double r = sqrt(dist2);
     nr = phi_spline->n;
@@ -95,8 +71,8 @@ double eam::toForce(atom_type::_type_prop_key type_from, atom_type::_type_prop_k
     return fpair;
 }
 
-double eam::rhoContribution(atom_type::_type_prop_key _atom_type, double dist2) {
-    InterpolationObject *electron_spline = electron_density.getEamItemByType(_atom_type);
+double eam::rhoContribution(const atom_type::_type_prop_key _atom_key, const double dist2) {
+    InterpolationObject *electron_spline = electron_density.getEamItemByType(_atom_key);
 
     double r = sqrt(dist2);
     int nr = electron_spline->n;
@@ -110,8 +86,8 @@ double eam::rhoContribution(atom_type::_type_prop_key _atom_type, double dist2) 
 
 }
 
-double eam::embedEnergyContribution(atom_type::_type_prop_key _atom_type, double rho) {
-    InterpolationObject *embed = embedded.getEamItemByType(_atom_type);
+double eam::embedEnergyContribution(const atom_type::_type_prop_key _atom_key, const double rho) {
+    InterpolationObject *embed = embedded.getEamItemByType(_atom_key);
     int nr = embed->n;
     double p = rho * embed->invDx + 1.0;
     int m = static_cast<int> (p);

@@ -17,7 +17,7 @@ atom_type::_type_prop_key AtomPropsList::addAtomProp(const atom_type::AtomProp &
 atom_type::_type_prop_key AtomPropsList::addAtomProp(const atom_type::_type_atomic_no no, const std::string name,
                                                      const double weight, const double lat_const,
                                                      const double cut_off) {
-    const atom_type::_type_prop_key key = makeId(no);
+    const atom_type::_type_prop_key key = AtomPropsList::makeId(no);
     CHECK_EXIST_OR_RETURN(key, KeyPropExists);
     lat_props.push_back(atom_type::AtomProp{key, no, name, weight, lat_const, cut_off});
     return key;

@@ -64,6 +64,7 @@ public:
 
     /**
      * broadcast list to other processor.
+     * @note @param size must be the same on all processors.
      * @param master master processor.
      * @param rank current rank id.
      * @param comm MPI Communicators
@@ -72,18 +73,18 @@ public:
      */
     void sync(const int root, const int rank, MPI_Comm comm, const size_t size);
 
-private:
-    std::vector<atom_type::AtomProp> lat_props;
-
     /**
      * generate id by atomic number.
      * @param no atomic number.
      * @return generated key.
      */
-    inline atom_type::_type_prop_key makeId(atom_type::_type_atomic_no no) {
+    static inline atom_type::_type_prop_key makeId(atom_type::_type_atomic_no no) {
         // note id can not be: KeyPropNotFound or KeyPropExists.
         return no; // todo we dont consider the same atomic no, but for different id.
     }
+
+private:
+    std::vector<atom_type::AtomProp> lat_props;
 };
 
 
