@@ -71,7 +71,7 @@ void SetflParser::parseBody(eam *eam_instance) {
         double mass, lat; // mass, lattice const
         char latticeType[8]; // lattice type.
         sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
-        atom_type::_type_prop_key key = eam_instance->type_lists.addAtomProp(nAtomic, "", mass, lat,
+        atom_type::_type_prop_key key = type_lists.addAtomProp(nAtomic, "", mass, lat,
                                                                              cutoff); // todo ele name
         prop_key_list[i] = key;
 

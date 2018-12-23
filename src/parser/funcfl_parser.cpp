@@ -29,7 +29,7 @@ void FuncflParser::parseHeader() {
     double dRho, dR, cutoff;
     fgets(tmp, sizeof(tmp), pot_file);
     sscanf(tmp, "%d %le %d %le %le", &nRho, &dRho, &nR, &dR, &cutoff);
-//  todo   eam_instance->type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff);
+    type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff);
 }
 
 void FuncflParser::parseBody(eam *eam_instance) {

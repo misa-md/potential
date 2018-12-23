@@ -8,12 +8,16 @@
 #include <string>
 #include "types.h"
 #include "eam.h"
+#include "atom_type_lists.h"
 
 /**
  * parse eam potential file.
  */
 class Parser {
 public:
+    // all types are saved in this object while parsing.
+    AtomPropsList type_lists;
+
     explicit Parser(const std::string filename);
 
     /**

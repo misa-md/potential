@@ -8,7 +8,6 @@
 #include "eam_phi.h"
 #include "eam_one_way.h"
 #include "types.h"
-#include "atom_type_lists.h"
 
 class eam {
     friend class SetflParser; // todo better permission.
@@ -68,8 +67,6 @@ public:
      */
     void setlatticeType(char *_latticeType);
 
-protected:
-    AtomPropsList type_lists; // all types are saved in this object.
 private:
     const atom_type::_type_atom_types _nElems; // the count of element types, which is initialized as 0.
     // all kinds of atoms using the same cutoff.

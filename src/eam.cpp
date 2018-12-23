@@ -23,12 +23,6 @@ void eam::setlatticeType(char *_latticeType) {
 }
 
 void eam::eamBCast(const int root, const int rank, MPI_Comm comm) {
-//    MPI_Bcast(&_nElems, 1, MPI_INT, POT_MASTER_PROCESSOR, MPI_COMM_WORLD);
-//    if (rank != POT_MASTER_PROCESSOR) {
-//        this->initElementN(_nElems); // initialize array for storing eam data.
-//    }
-//    MPI_Bcast(mass, _nElems, MPI_DOUBLE, POT_MASTER_PROCESSOR, MPI_COMM_WORLD);
-    type_lists.sync(root, rank, comm, _nElems); // todo the list size
     electron_density.sync(_nElems, root, rank, comm);
     embedded.sync(_nElems, root, rank, comm);
     eam_phi.sync(_nElems, root, rank, comm);
