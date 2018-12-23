@@ -28,7 +28,7 @@ public:
     // insert data and return the index inserted.
     array_map::type_map_size insert(K const key, V const value);
 
-    // return the reference of the element specified by key.
+    // return the pointer of the element specified by key.
     V *get(K const key);
 
     const array_map::type_map_size size();

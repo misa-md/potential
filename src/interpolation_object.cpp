@@ -15,7 +15,7 @@ InterpolationObject::~InterpolationObject() {
     delete[] spline;
 }
 
-void InterpolationObject::initInterpolationObject(int _n, double _x0, double dx, double data[]) {
+void InterpolationObject::initInterpolationObject(const int _n, const double _x0, const double dx, double data[]) {
     n = _n;
     values = new double[n + 1];
     invDx = 1.0 / dx;
@@ -23,6 +23,7 @@ void InterpolationObject::initInterpolationObject(int _n, double _x0, double dx,
     for (int ii = 0; ii < n; ++ii) {
         values[ii + 1] = data[ii];
     }
+    // todo where is values[0]?
 }
 
 void InterpolationObject::bcastInterpolationObject(const int root, const int rank, MPI_Comm comm) {
