@@ -95,6 +95,3 @@ void SetflParser::parseBody(eam *eam_instance) {
     delete[] buf;
     delete[] prop_key_list;
 }
-
-// eam *eam_instance = eam::newInstance(elements_size, POT_MASTER_PROCESSOR, 0,
-//                                         MPI_COMM_WORLD); // fixme: set rank and comm

@@ -14,6 +14,7 @@ set(HEADER_FILES
         types.h
         utils.h
         data_structure/array_map.hpp
+        parser/funcfl_parser.h
         parser/parser.h
         parser/setfl_parser.h
         )
@@ -23,10 +24,11 @@ set(SOURCE_FILES
         eam_one_way.cpp
         eam_phi.cpp
         eam.cpp
-        interpolation_object.cpp
-        parser/setfl_parser.cpp
-        parser/parser.cpp
         types.cpp
+        interpolation_object.cpp
+        parser/funcfl_parser.cpp
+        parser/parser.cpp
+        parser/setfl_parser.cpp
         )
 
 # set(MAIN_FILE main.cpp)
