@@ -7,7 +7,7 @@
 
 #include "eam_phi.h"
 #include "eam_one_way.h"
-#include "atom_type.h"
+#include "types.h"
 #include "atom_type_lists.h"
 
 class eam {

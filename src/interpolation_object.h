@@ -23,7 +23,7 @@ public:
 
     void bcastInterpolationObject(const int root, const int rank, MPI_Comm comm);
 
-    void interpolatefile();
+    void interpolateFile();
 
     int n;          //!< 表中数据个数
     double x0;      //!< 起始点

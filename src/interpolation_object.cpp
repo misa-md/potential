@@ -32,7 +32,7 @@ void InterpolationObject::bcastInterpolationObject(const int root, const int ran
         double inv_dx;
     } interpolation_data_pack;
     interpolation_data_pack temp;
-    if (rank == POT_MASTER_PROCESSOR) {
+    if (rank == root) {
         temp.n = this->n;
         temp.x0 = this->x0;
         temp.inv_dx = this->invDx;
@@ -40,21 +40,21 @@ void InterpolationObject::bcastInterpolationObject(const int root, const int ran
 
     MPI_Bcast(&temp, sizeof(interpolation_data_pack), MPI_BYTE, root, comm);
 
-    if (rank != POT_MASTER_PROCESSOR) {
+    if (rank != root) {
         this->n = temp.n;
         this->x0 = temp.x0;
         this->invDx = temp.inv_dx;
         values = new double[n + 1];
     }
 
-    MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, comm);
 }
 
 /**
  * @see https://github.com/lammps/lammps/blob/stable_16Mar2018/src/MANYBODY/pair_eam.cpp#L745
  * @see http://lammps.sandia.gov/threads/msg21496.html
  */
-void InterpolationObject::interpolatefile() {
+void InterpolationObject::interpolateFile() {
     spline = new double[n + 1][7];
     for (int m = 1; m <= n; m++) {
         spline[m][6] = values[m];

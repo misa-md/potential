@@ -6,7 +6,7 @@
 #define POT_ATOM_TYPE_LISTS_H
 
 #include <vector>
-#include "atom_type.h"
+#include "types.h"
 
 #define CHECK_EXIST_OR_RETURN(ID, RT) \
 for (const atom_type::AtomProp &lp :lat_props) { \

@@ -8,13 +8,13 @@
 #include <vector>
 #include "data_structure/array_map.hpp"
 #include "interpolation_object.h"
-#include "atom_type.h"
+#include "types.h"
+#include "interpolation_lists.hpp"
 
 class OneWayEam : public InterpolationObject {
-
 };
 
-typedef ArrayMap<atom_type::_type_prop_key, OneWayEam> _type_one_way_map;
+typedef InterpolationLists<atom_type::_type_prop_key, OneWayEam> _type_one_way_map;
 
 /**
  * electron charge density and embedded energy items for N elements.
@@ -41,30 +41,16 @@ public:
      */
     void append(atom_type::_type_prop_key ele_key, OneWayEam &eam_item);
 
-    /**
-     * sync all data to all other processors.
-     * @param root the root processor.
-     * @param rank MPI rank id of current processor.
-     * @param comm communicator.
-     */
-    void sync(const int root, const int rank, MPI_Comm comm);
-
-    /**
-     * @deprecated
-     * initialize vector {@var eamPhis}, and sync to other processors.
-     * @param n_types the size of elements.
-     * @param root the root processor.
-     * @param rank MPI rank id of current processor.
-     * @param comm communicator.
-     */
-    void sync(atom_type::_type_atom_types n_types, const int root, const int rank, MPI_Comm comm);
-
     void interpolateAll();
 
     /**
      * @deprecated
      */
     OneWayEam *getEamItemByType(atom_type::_type_prop_key ele_key);
+
+    inline void sync(const atom_type::_type_atom_types eles, const int root, const int rank, MPI_Comm comm) {
+        eam_items.sync(eles, root, rank, comm);
+    }
 
 private:
 //    const atom_type::_type_atom_types capacity; // the max capacity of vector

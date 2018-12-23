@@ -19,20 +19,9 @@ void OneWayEamList::append(atom_type::_type_prop_key ele_key, OneWayEam &eam_ite
     eam_items.insert(ele_key, eam_item); // todo catch insert fail?
 }
 
-void OneWayEamList::sync(const int root, const int rank, MPI_Comm comm) {
-    for (array_map::type_map_index i = 0; i < eam_items.size(); i++) {
-        eam_items.elements[i].bcastInterpolationObject(root, rank, comm);
-    }
-}
-
-void OneWayEamList::sync(atom_type::_type_atom_types n_types,
-                         const int root, const int rank, MPI_Comm comm) {
-    sync(root, rank, comm);
-}
-
 void OneWayEamList::interpolateAll() {
     for (array_map::type_map_index i = 0; i < eam_items.size(); i++) {
-        eam_items.elements[i].interpolatefile();
+        eam_items.elements[i].interpolateFile();
     }
 }
 

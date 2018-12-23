@@ -2,8 +2,8 @@
 // Created by genshen on 2018-12-22.
 //
 
-#ifndef POT_ATOM_TYPE_H
-#define POT_ATOM_TYPE_H
+#ifndef POT_TYPES_H
+#define POT_TYPES_H
 
 #include <mpi.h>
 #include <string>
@@ -15,9 +15,10 @@ namespace atom_type {
     typedef unsigned short _type_atom_types; // the count of different atoms.
     typedef _type_atom_types _type_atom_index;
 
-    const MPI_Datatype MPI_TYPE_TYPES = MPI_SHORT; // mpi type of type _type_atom_types.
+    // multiple definition of a const global variable is allowed in cpp.
+    extern const MPI_Datatype MPI_TYPE_TYPES; // mpi type of type _type_atom_types.
 
-    const _type_prop_key PropKeyMax = USHRT_MAX;
+    extern const _type_prop_key PropKeyMax;
     /**
      * definition of lattice properties.
      */
@@ -45,4 +46,11 @@ namespace atom_type {
     const AtomProp &Mn = atom_props_list[3];
 */
 }
-#endif //POT_ATOM_TYPE_H
+
+namespace array_map {
+    typedef unsigned short type_map_size;
+    typedef type_map_size type_map_index;
+    extern const MPI_Datatype MPI_Type_MapSize;
+}
+
+#endif //POT_TYPES_H

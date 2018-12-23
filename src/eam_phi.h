@@ -8,11 +8,10 @@
 #include <vector>
 #include "data_structure/array_map.hpp"
 #include "interpolation_object.h"
-#include "atom_type.h"
-
+#include "types.h"
+#include "interpolation_lists.hpp"
 
 class EamPhi : public InterpolationObject {
-
 };
 
 // type of combination of two _type_prop_key.
@@ -43,7 +42,7 @@ public:
 };
 
 typedef KeyDb _type_two_way_key;
-typedef ArrayMap<_type_two_way_key, EamPhi> _type_two_way_map;
+typedef InterpolationLists<_type_two_way_key, EamPhi> _type_two_way_map;
 
 /**
  *  pair potentials for N elements
@@ -76,24 +75,6 @@ public:
 
     void append(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to, EamPhi &phi);
 
-    /**
-     * sync all EamPhi in vector to other processors.
-     * @param root the root processor.
-     * @param rank MPI rank id of current processor.
-     * @param comm communicator.
-     */
-    void sync(const int root, const int rank, MPI_Comm comm);
-
-    /**
-     * @deprecated
-     * initialize vector {@var eamPhis}, and sync to other processors.
-     * @param n_types the count of elements.
-     * @param root the root processor.
-     * @param rank MPI rank id of current processor.
-     * @param comm communicator.
-     */
-    void sync(const atom_type::_type_atom_types n_types, const int root, const int rank, MPI_Comm comm);
-
     void interpolateAll();
 
     /**
@@ -104,10 +85,11 @@ public:
      */
     double getPhiByElementType(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to, double distance);
 
-    /**
-     * @deprecated
-     */
     EamPhi *getPhiByEamPhiByType(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to);
+
+    inline void sync(const atom_type::_type_atom_types eles, const int root, const int rank, MPI_Comm comm) {
+        eam_phis.sync(eles * (eles + 1) / 2, root, rank, comm);
+    }
 
 private:
 //    atom_type::_type_atom_types n_types;
