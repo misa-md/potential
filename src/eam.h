@@ -11,7 +11,7 @@
 #include "atom_type_lists.h"
 
 class eam {
-    friend class EamParser;
+    friend class SetflParser; // todo better permission.
 
 public:
 

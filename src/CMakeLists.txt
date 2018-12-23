@@ -7,7 +7,6 @@ configure_file(
 set(HEADER_FILES
         atom_type_lists.h
         eam_one_way.h
-        eam_parser.h
         eam_phi.h
         eam.h
         interpolation_lists.hpp
@@ -15,15 +14,18 @@ set(HEADER_FILES
         types.h
         utils.h
         data_structure/array_map.hpp
+        parser/parser.h
+        parser/setfl_parser.h
         )
 
 set(SOURCE_FILES
         atom_type_lists.cpp
         eam_one_way.cpp
-        eam_parser.cpp
         eam_phi.cpp
         eam.cpp
         interpolation_object.cpp
+        parser/setfl_parser.cpp
+        parser/parser.cpp
         types.cpp
         )
 
