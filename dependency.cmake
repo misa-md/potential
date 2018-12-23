@@ -26,7 +26,7 @@ if (MPI_ENABLE_FLAG)
 
     include_directories(${MPI_CXX_INCLUDE_PATH})
 
-    set(M_EXTRA_LIBS ${M_EXTRA_LIBS} ${MPI_LIBRARIES}) #add mpi lib
+    set(POT_EXTRA_LIBS ${POT_EXTRA_LIBS} ${MPI_LIBRARIES}) #add mpi lib
 endif ()
 ##### mpi and openmp end
 

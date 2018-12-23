@@ -37,16 +37,20 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 add_library(${POT_LIB_NAME} STATIC ${HEADER_FILES} ${SOURCE_FILES})
 target_include_directories(
         ${POT_LIB_NAME}
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include>
 )
 
-# todo import
+set(TARGETS_EXPORT_NAME ${POT_LIB_NAME}-targets)
+set(POT_CMAKE_DIR lib/cmake/pot)
 
 ##########################
 ##### install files
 ##########################
 # install bin and libs.
-install(TARGETS ${M_LIB_NAME}
+install(TARGETS ${POT_LIB_NAME}
+        EXPORT ${TARGETS_EXPORT_NAME}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -54,8 +58,17 @@ install(TARGETS ${M_LIB_NAME}
 
 # install header.
 install(DIRECTORY "./"
-        DESTINATION "include"
+        DESTINATION "include" # todo adding prefxi "pot": fatal error: 'types.h' file not found
         FILES_MATCHING
         PATTERN "*.h"
         PATTERN "*.hpp"
         )
+
+# install export target and config for find_package
+install(EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${POT_CMAKE_DIR} NAMESPACE pot::)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+        "pot-config.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/pot-config.cmake"
+        INSTALL_DESTINATION ${POT_CMAKE_DIR}
+)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pot-config.cmake" DESTINATION ${POT_CMAKE_DIR})

@@ -24,7 +24,7 @@ add_executable(${POT_UINT_TEST_NAME} ${TEST_SOURCE_FILES} ${TEST_HEADER_FILES})
 # Extra linking for the project.
 # Extra linking for the project.
 target_link_libraries(${POT_UINT_TEST_NAME}
-        PRIVATE GTest::gtest GTest::gtest_main ${POT_LIB_NAME} ${M_EXTRA_LIBS}
+        PRIVATE GTest::gtest GTest::gtest_main ${POT_LIB_NAME} ${POT_EXTRA_LIBS}
         )
 # This is so you can do 'make test' to see all your tests run, instead of
 # manually running the executable runUnitTests to see those specific tests.
