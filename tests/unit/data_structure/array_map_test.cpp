@@ -43,8 +43,6 @@ TEST(arr_map_insert_size, arr_map_test) {
 
 // test get
 TEST(arr_map_insert_get, arr_map_test) {
-    int except_un_limit = ArrayMap<int, int>::INDEX_UN_LIMITED;
-
     ArrayMap<int, int> map(3);
     map.insert(1, 2);
     map.insert(2, 4);

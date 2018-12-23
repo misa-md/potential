@@ -42,9 +42,14 @@ InterpolationLists<K, IO>::InterpolationLists(array_map::type_map_size capacity)
 
 template<typename K, typename IO>
 void InterpolationLists<K, IO>::sync(const int root, const int rank, MPI_Comm comm) {
-    array_map::type_map_size size;
-    MPI_Bcast(&size, 1, array_map::MPI_Type_MapSize, root, comm); // sync size of array map.
+    // sync size of array map.
+    array_map::type_map_size size = ArrayMap<K, IO>::_size;
+    MPI_Bcast(&size, 1, array_map::MPI_Type_MapSize, root, comm);
     ArrayMap<K, IO>::resize(size); // make the size the same on all processors.
+
+    // sync keys  // todo not use MPI_BYTE, use user defined MPI type.
+    MPI_Bcast(ArrayMap<K, IO>::keys, sizeof(K) * ArrayMap<K, IO>::_size, MPI_BYTE, root, comm);
+    // sync values/data
     for (array_map::type_map_index i = 0; i < ArrayMap<K, IO>::_size; i++) {
         ArrayMap<K, IO>::elements[i].bcastInterpolationObject(root, rank, comm);
     }
@@ -53,8 +58,12 @@ void InterpolationLists<K, IO>::sync(const int root, const int rank, MPI_Comm co
 template<typename K, typename IO>
 void
 InterpolationLists<K, IO>::sync(const array_map::type_map_size size, const int root, const int rank, MPI_Comm comm) {
+    // todo if size > capacity?
     // the size of data elements may be different on each processors, make them the same.
     ArrayMap<K, IO>::resize(size);
+    // sync keys  // todo not use MPI_BYTE, use user defined MPI type.
+    MPI_Bcast(ArrayMap<K, IO>::keys, sizeof(K) * ArrayMap<K, IO>::_size, MPI_BYTE, root, comm);
+    // sync values
     for (array_map::type_map_index i = 0; i < ArrayMap<K, IO>::_size; i++) {
         ArrayMap<K, IO>::elements[i].bcastInterpolationObject(root, rank, comm);
     }
