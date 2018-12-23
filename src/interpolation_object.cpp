@@ -8,6 +8,7 @@
 
 InterpolationObject::InterpolationObject() {
     values = nullptr;
+    spline = nullptr;
 }
 
 InterpolationObject::~InterpolationObject() {
