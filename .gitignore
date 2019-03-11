@@ -2,6 +2,7 @@ vendor
 pkg.dep.cmake
 .idea/
 cmake-build-debug/
+.DS_STORE
 
 ### C template
 # Prerequisites

@@ -1,45 +1,32 @@
 //
 // Created by genshen on 2018-05-20.
 //
-#include <logs/logs.h>
 #include "eam_phi.h"
 
-void EamPhiList::setSize(_type_atom_types n_types) {
-    this->n_types = n_types;
-    eamPhis.resize(n_types * (n_types + 1) / 2); // n_types + n_types * (n_types - 1) / 2
-}
+EamPhiList::EamPhiList(atom_type::_type_atom_types size)
+        : eam_phis(size * (size + 1) / 2) {}
 
-void EamPhiList::append(atom_type::atom_type type_from, atom_type::atom_type type_to,
+void EamPhiList::append(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to,
                         int nR, double x0, double dr, double *buf) {
-    unsigned int i = index(type_from, type_to);
-    eamPhis[i].initInterpolationObject(nR, x0, dr, buf);
-}
-
-void EamPhiList::append(atom_type::atom_type type_from, atom_type::atom_type type_to, EamPhi &phi) {
-    unsigned int i = index(type_from, type_to);
-    eamPhis[i] = phi;
-}
-
-void EamPhiList::sync(int rank) {
-    for (EamPhi &phi:eamPhis) {
-        phi.bcastInterpolationObject(rank);
+    array_map::type_map_index i = eam_phis.insert(_type_two_way_key(type_from, type_to), EamPhi{});
+    if (i == _type_two_way_map::INDEX_UN_LIMITED) {
+        return; // todo catch insert fail?
     }
+    eam_phis.elements[i].initInterpolationObject(nR, x0, dr, buf);
 }
 
-void EamPhiList::sync(_type_atom_types n_types, int rank) {
-    if (this->n_types != n_types && eamPhis.size() == 0) {
-        setSize(n_types);
-    }
-    sync(rank);
+void
+EamPhiList::append(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to, EamPhi &phi) {
+    eam_phis.insert(_type_two_way_key(type_from, type_to), phi);
 }
 
 void EamPhiList::interpolateAll() {
-    for (EamPhi &phi:eamPhis) {
-        phi.interpolatefile();
+    for (array_map::type_map_index i = 0; i < eam_phis.size(); i++) {
+        eam_phis.elements[i].interpolateFile();
     }
 }
 
-EamPhi *EamPhiList::getPhiByEamPhiByType(atom_type::atom_type type_from, atom_type::atom_type type_to) {
-    unsigned int i = index(type_from, type_to);
-    return &eamPhis[i];
+EamPhi *
+EamPhiList::getPhiByEamPhiByType(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to) {
+    return eam_phis.get(_type_two_way_key(type_from, type_to)); // todo export interface of get.
 }

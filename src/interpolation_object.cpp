@@ -2,15 +2,13 @@
 #include <mpi.h>
 #include <iostream>
 #include <algorithm>
-#include <utils/bundle.h>
-#include <utils/mpi_utils.h>
 
 #include "interpolation_object.h"
-#include "../utils/mpi_domain.h"
-#include "../types/pre_define.h"
+#include "utils.h"
 
 InterpolationObject::InterpolationObject() {
     values = nullptr;
+    spline = nullptr;
 }
 
 InterpolationObject::~InterpolationObject() {
@@ -18,7 +16,7 @@ InterpolationObject::~InterpolationObject() {
     delete[] spline;
 }
 
-void InterpolationObject::initInterpolationObject(int _n, double _x0, double dx, double data[]) {
+void InterpolationObject::initInterpolationObject(const int _n, const double _x0, const double dx, double data[]) {
     n = _n;
     values = new double[n + 1];
     invDx = 1.0 / dx;
@@ -26,35 +24,39 @@ void InterpolationObject::initInterpolationObject(int _n, double _x0, double dx,
     for (int ii = 0; ii < n; ++ii) {
         values[ii + 1] = data[ii];
     }
+    // todo where is values[0]?
 }
 
-void InterpolationObject::bcastInterpolationObject(int rank) {
-    kiwi::Bundle bundle = kiwi::Bundle();
-    bundle.newPackBuffer(sizeof(int) + 2 * sizeof(double));
-
-    if (rank == MASTER_PROCESSOR) {
-        bundle.put(n);
-        bundle.put(x0);
-        bundle.put(invDx);
+void InterpolationObject::bcastInterpolationObject(const int root, const int rank, MPI_Comm comm) {
+    typedef struct {
+        int n;
+        double x0;
+        double inv_dx;
+    } interpolation_data_pack;
+    interpolation_data_pack temp;
+    if (rank == root) {
+        temp.n = this->n;
+        temp.x0 = this->x0;
+        temp.inv_dx = this->invDx;
     }
-    MPI_Bcast(bundle.getPackedData(), bundle.getPackedDataCap(), MPI_BYTE,
-              MASTER_PROCESSOR, MPIDomain::sim_processor.comm);
-    if (rank != MASTER_PROCESSOR) {
-        int cursor = 0;
-        bundle.get(cursor, n);
-        bundle.get(cursor, x0);
-        bundle.get(cursor, invDx);
+
+    MPI_Bcast(&temp, sizeof(interpolation_data_pack), MPI_BYTE, root, comm);
+
+    if (rank != root) {
+        this->n = temp.n;
+        this->x0 = temp.x0;
+        this->invDx = temp.inv_dx;
         values = new double[n + 1];
     }
-    bundle.freePackBuffer();
-    MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(values, n + 1, MPI_DOUBLE, 0, comm);
 }
 
 /**
  * @see https://github.com/lammps/lammps/blob/stable_16Mar2018/src/MANYBODY/pair_eam.cpp#L745
  * @see http://lammps.sandia.gov/threads/msg21496.html
  */
-void InterpolationObject::interpolatefile() {
+void InterpolationObject::interpolateFile() {
     spline = new double[n + 1][7];
     for (int m = 1; m <= n; m++) {
         spline[m][6] = values[m];

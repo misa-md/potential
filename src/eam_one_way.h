@@ -6,48 +6,57 @@
 #define CRYSTAL_MD_EAM_RHO_H
 
 #include <vector>
+#include "data_structure/array_map.hpp"
 #include "interpolation_object.h"
-#include "../types/pre_define.h"
-#include "../types/atom_types.h"
+#include "types.h"
+#include "interpolation_lists.hpp"
 
 class OneWayEam : public InterpolationObject {
-
 };
+
+typedef InterpolationLists<atom_type::_type_prop_key, OneWayEam> _type_one_way_map;
 
 /**
  * electron charge density and embedded energy items for N elements.
  */
 class OneWayEamList {
 public:
-    void setSize(_type_atom_types n_types);
-
-    void append(atom_type::atom_type ele_type, int nR, double x0, double dr, double *buf);
-
-    void append(atom_type::atom_type ele_type, OneWayEam &eam_item);
-
-    void sync(int rank); // this method must be called after calling {@func setSize}.
+    explicit OneWayEamList(atom_type::_type_atom_types size);
+//    void setSize(atom_type::_type_atom_types n_types);
 
     /**
-     * initialize  vector {@var eamPhis}, and sync to other processors.
-     * @param n_types
-     * @param rank
+     * insert an empty @class OneWayEam, and initialize it with parameters:@param nR,x0,dr,buf
+     * @param ele_key key
+     * @param nR
+     * @param x0
+     * @param dr
+     * @param buf
      */
-    void sync(_type_atom_types n_types, int rank);
+    void append(atom_type::_type_prop_key ele_key, int nR, double x0, double dr, double *buf);
+
+    /**
+     * insert an @class OneWayEam object with initialized data.
+     * @param ele_key key
+     * @param eam_item
+     */
+    void append(atom_type::_type_prop_key ele_key, OneWayEam &eam_item);
 
     void interpolateAll();
 
     /**
      * @deprecated
      */
-    OneWayEam *getEamItemByType(atom_type::atom_type ele_type);
+    OneWayEam *getEamItemByType(atom_type::_type_prop_key ele_key);
+
+    inline void sync(const atom_type::_type_atom_types eles, const int root, const int rank, MPI_Comm comm) {
+        eam_items.sync(eles, root, rank, comm);
+    }
 
 private:
-    _type_atom_types n_types;
-    std::vector<OneWayEam> eamItems;
-
-    inline unsigned int index(atom_type::atom_type ele_type) {
-        return ele_type;
-    }
+//    const atom_type::_type_atom_types capacity; // the max capacity of vector
+    //atom_type::_type_atom_types n_types; // the real size in vector.
+    // std::vector<OneWayEam> eamItems;
+    _type_one_way_map eam_items;
 };
 
 

@@ -4,41 +4,27 @@
 
 #include "eam_one_way.h"
 
-void OneWayEamList::setSize(_type_atom_types n_types) {
-    this->n_types = n_types;
-    eamItems.resize(n_types);
-}
+OneWayEamList::OneWayEamList(atom_type::_type_atom_types size)
+        : eam_items(size) {}
 
-void OneWayEamList::append(atom_type::atom_type ele_type, int nR, double x0, double dr, double *buf) {
-    unsigned int i = index(ele_type);
-    eamItems[i].initInterpolationObject(nR, x0, dr, buf);
-}
-
-void OneWayEamList::append(atom_type::atom_type ele_type, OneWayEam &eam_item) {
-    unsigned int i = index(ele_type);
-    eamItems[i] = eam_item;
-}
-
-void OneWayEamList::sync(int rank) {
-    for (OneWayEam &item: eamItems) {
-        item.bcastInterpolationObject(rank);
+void OneWayEamList::append(atom_type::_type_prop_key ele_key, int nR, double x0, double dr, double *buf) {
+    array_map::type_map_index i = eam_items.insert(ele_key, OneWayEam{});
+    if (i == _type_one_way_map::INDEX_UN_LIMITED) {
+        return; // todo catch insert fail?
     }
+    eam_items.elements[i].initInterpolationObject(nR, x0, dr, buf);
 }
 
-void OneWayEamList::sync(_type_atom_types n_types, int rank) {
-    if (this->n_types != n_types && eamItems.size() == 0) {
-        setSize(n_types);
-    }
-    sync(rank);
+void OneWayEamList::append(atom_type::_type_prop_key ele_key, OneWayEam &eam_item) {
+    eam_items.insert(ele_key, eam_item); // todo catch insert fail?
 }
 
 void OneWayEamList::interpolateAll() {
-    for (OneWayEam &item: eamItems) {
-        item.interpolatefile();
+    for (array_map::type_map_index i = 0; i < eam_items.size(); i++) {
+        eam_items.elements[i].interpolateFile();
     }
 }
 
-OneWayEam *OneWayEamList::getEamItemByType(atom_type::atom_type ele_type) {
-    unsigned int i = index(ele_type);
-    return &eamItems[i];
+OneWayEam *OneWayEamList::getEamItemByType(atom_type::_type_prop_key ele_key) {
+    return eam_items.get(ele_key); // todo export interface of get.
 }

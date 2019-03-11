@@ -6,30 +6,63 @@
 #define CRYSTAL_MD_EAM_HPI_H
 
 #include <vector>
-#include "../types/atom_types.h"
+#include "data_structure/array_map.hpp"
 #include "interpolation_object.h"
-
+#include "types.h"
+#include "interpolation_lists.hpp"
 
 class EamPhi : public InterpolationObject {
-
 };
+
+// type of combination of two _type_prop_key.
+struct KeyDb {
+public:
+    KeyDb(atom_type::_type_prop_key from, atom_type::_type_prop_key to)
+            : from(from), to(to) {
+        // make sure from >= to
+        if (from < to) {
+            this->from = to;
+            this->to = from;
+        }
+    }
+
+//    void *operator new[](size_t size) {
+//        void *p = ::new KeyDb[size];
+//        return malloc(size);
+//    }
+
+    atom_type::_type_prop_key from, to;
+
+    inline bool operator==(const KeyDb &r) const {
+        return (from == r.from && to == r.to);
+    }
+
+//private:
+    KeyDb() : from(0), to(0) {} // only used for new array.
+};
+
+typedef KeyDb _type_two_way_key;
+typedef InterpolationLists<_type_two_way_key, EamPhi> _type_two_way_map;
 
 /**
  *  pair potentials for N elements
  */
-
 class EamPhiList {
 public:
+    /**
+     *
+     * @param size the count of elements.
+     */
+    explicit EamPhiList(atom_type::_type_atom_types size);
 
     /**
      * set the count of atom types.
      * @param types pair potentials with {@var types} types of elements.
      */
-    void setSize(_type_atom_types n_types);
+//    void setSize(atom_type::_type_atom_types n_types);
 
     /**
      * append an eam pair potential of element A to element B to the list.
-     * this method must be called after calling {@func setSize()}
      * @param type_from one element
      * @param type_to another element
      * @param nR the count/size of data.
@@ -37,23 +70,10 @@ public:
      * @param dr delta r, the length of two neighboring data.
      * @param buf data buffer
      */
-    void append(atom_type::atom_type type_from, atom_type::atom_type type_to,
+    void append(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to,
                 int nR, double x0, double dr, double *buf);
 
-    void append(atom_type::atom_type type_from, atom_type::atom_type type_to, EamPhi &phi);
-
-    /**
-     * sync all EamPhi in vector to other processors.
-     * @param rank MPI rank id.
-     */
-    void sync(int rank); // this methos must be called after calling {@func setSize}.
-
-    /**
-     * initialize  vector {@var eamPhis}, and sync to other processors.
-     * @param n_types
-     * @param rank
-     */
-    void sync(_type_atom_types n_types, int rank);
+    void append(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to, EamPhi &phi);
 
     void interpolateAll();
 
@@ -63,42 +83,18 @@ public:
      * @param type_to
      * @return
      */
-    double getPhiByElementType(atom_type::atom_type type_from, atom_type::atom_type type_to, double distance);
+    double getPhiByElementType(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to, double distance);
 
-    /**
-     * @deprecated
-     */
-    EamPhi *getPhiByEamPhiByType(atom_type::atom_type type_from, atom_type::atom_type type_to);
+    EamPhi *getPhiByEamPhiByType(atom_type::_type_prop_key type_from, atom_type::_type_prop_key type_to);
+
+    inline void sync(const atom_type::_type_atom_types eles, const int root, const int rank, MPI_Comm comm) {
+        eam_phis.sync(eles * (eles + 1) / 2, root, rank, comm);
+    }
 
 private:
-    _type_atom_types n_types;
-    std::vector<EamPhi> eamPhis;
-
-    /**
-     * Compute the index in vector if two element are type_from and type_tp.
-     *
-     * Example 3 types of elements (table):
-     * Fe: 0, Cu: 1, Ni: 2
-     * ------------------------
-     * type_from | type_to | index
-     * ------------------------
-     *  Fe(0)  Fe(0)  0
-     *  Cu(1)  Fe(0)  1
-     *  Cu(1)  Cu(1)  2
-     *  Ni(2)  Fe(0)  3
-     *  Ni(2)  Cu(1)  4
-     *  Ni(2)  Ni(2)  5
-     * ------------------------
-     * @param type_from element type A
-     * @param type_to another element type B.
-     * @return index in vector.
-     */
-    inline unsigned int index(atom_type::atom_type type_from, atom_type::atom_type type_to) {
-        if (type_from < type_to) {
-            return type_to * (type_to + 1) / 2 + type_from;
-        }
-        return type_from * (type_from + 1) / 2 + type_to;
-    }
+//    atom_type::_type_atom_types n_types;
+//    std::vector<EamPhi> eamPhis;
+    _type_two_way_map eam_phis;
 };
 
 #endif //CRYSTAL_MD_EAM_HPI_H
