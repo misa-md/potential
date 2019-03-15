@@ -47,7 +47,10 @@ target_include_directories(
 )
 
 set(TARGETS_EXPORT_NAME ${POT_LIB_NAME}-targets)
-set(POT_CMAKE_DIR lib/cmake/pot)
+set(POT_LIB_CMAKE_DIR lib/cmake/${POT_LIB_NAME})
+set(POT_LIB_CMAKE_NAMESPACE ${POT_LIB_NAME}::)
+set(POT_LIB_CMAKE_CONFIG_IN "${POT_LIB_NAME}-config.cmake.in")
+set(POT_LIB_CMAKE_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/${POT_LIB_NAME}-config.cmake")
 
 ##########################
 ##### install files
@@ -69,10 +72,10 @@ install(DIRECTORY "./"
         )
 
 # install export target and config for find_package
-install(EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${POT_CMAKE_DIR} NAMESPACE pot::)
+install(EXPORT ${TARGETS_EXPORT_NAME} DESTINATION ${POT_LIB_CMAKE_DIR} NAMESPACE ${POT_LIB_CMAKE_NAMESPACE})
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
-        "pot-config.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/pot-config.cmake"
-        INSTALL_DESTINATION ${POT_CMAKE_DIR}
+        ${POT_LIB_CMAKE_CONFIG_IN} ${POT_LIB_CMAKE_CONFIG_OUT}
+        INSTALL_DESTINATION ${POT_LIB_CMAKE_DIR}
 )
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pot-config.cmake" DESTINATION ${POT_CMAKE_DIR})
+install(FILES ${POT_LIB_CMAKE_CONFIG_OUT} DESTINATION ${POT_LIB_CMAKE_DIR})
