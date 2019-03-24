@@ -8,6 +8,8 @@ include(dependency.cmake)
 
 add_subdirectory(src)
 
+add_subdirectory(examples)
+
 ##############################
 ## test configure
 ##############################
