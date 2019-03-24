@@ -3,18 +3,17 @@
 
 ## Install dependencies
 ```bash
-$ cd lib-pot
+# enter project root directory
+$ pkf fetch
 $ pkg install # install dependency
 ```
 
 ## Build
 ```bash
-$ cd lib-pot
 $ cmake -B./build -H./ \
- -DOpenMP_ENABLE_FLAG=ON \
+ -DOpenMP_ENABLE_FLAG=OFF \
  -DMPI_ENABLE_FLAG=ON \   # enable mpi
- -DTEST_BUILD_ENABLE_FLAG=ON \
- -DTEST_MPI_ENABLE_FLAG=ON \    # enable unit tests
- -DTEST_MPI_ENABLE_FLAG=OFF
+ -DTEST_BUILD_ENABLE_FLAG=ON \  # enable unit tests
+ -DTEST_MPI_ENABLE_FLAG=ON
 $ cmake --build ./build -j 4
 ```
