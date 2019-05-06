@@ -41,7 +41,7 @@ public:
     void interpolateFile();
 
     double toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
-                   const double dist2, const double df_sum);
+                   const double dist2, const double df_from, const double df_to);
 
     /**
      * compute the contribution to electron charge density from atom j of type {@var _atom_type} at location of one atom i.
@@ -71,7 +71,7 @@ public:
      * get the elements count involved in.
      * @return elements count.
      */
-    inline atom_type::_type_atom_types geEles() const{
+    inline atom_type::_type_atom_types geEles() const {
         return _n_eles;
     }
 

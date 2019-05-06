@@ -35,16 +35,17 @@ void eam::interpolateFile() {
 }
 
 double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
-                    const double dist2, const double df_sum) {
+                    const double dist2, const double df_from, const double df_to) {
     int nr, m;
     double p;
     double fpair;
-    double dRho, phiTmp, dPhi;
+    double phiTmp, dPhi;
     double recip, phi, phip, psip, z2, z2p;
     double (*spline)[7];
 
     InterpolationObject *phi_spline = eam_phi.getPhiByEamPhiByType(key_from, key_to);
-    InterpolationObject *electron_spline = electron_density.getEamItemByType(key_from); // todo which element type?
+    InterpolationObject *electron_spline_from = electron_density.getEamItemByType(key_from);
+    InterpolationObject *electron_spline_to = electron_density.getEamItemByType(key_to);
 
     double r = sqrt(dist2);
     nr = phi_spline->n;
@@ -53,19 +54,22 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
     m = std::max(1, std::min(m, (nr - 1)));
     p -= m;
     p = std::min(p, 1.0);
+
     spline = phi_spline->spline;
     phiTmp = ((spline[m][3] * p + spline[m][4]) * p + spline[m][5]) * p + spline[m][6];
     dPhi = (spline[m][0] * p + spline[m][1]) * p + spline[m][2];
-//    spline = rho_spline->spline // fixme  below.
-    spline = electron_spline->spline;
-    dRho = (spline[m][0] * p + spline[m][1]) * p + spline[m][2];
+
+    double *spline_m = electron_spline_from->spline[m];
+    const double rho_p_from = (spline_m[0] * p + spline_m[1]) * p + spline_m[2];
+    spline_m = electron_spline_to->spline[m];
+    const double rho_p_to = (spline_m[0] * p + spline_m[1]) * p + spline_m[2];
 
     z2 = phiTmp;
     z2p = dPhi;
     recip = 1.0 / r;
     phi = z2 * recip;
     phip = z2p * recip - phi * recip;
-    psip = df_sum * dRho + phip;
+    psip = df_from * rho_p_to + df_to * rho_p_from + phip;
     fpair = -psip * recip;
 
     return fpair;
