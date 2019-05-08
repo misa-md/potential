@@ -76,8 +76,21 @@ double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const doubl
 double eam::dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
     const InterpolationObject *embed = embedded.getEamItemByType(_atom_key);
     const SplineData s = embed->findSpline(rho);
-    // note:
-    // embedding energy(phi) can be computed by:
-    // phi = ((embed->spline[m][3]*p + embed->spline[m][4])*p + embed->spline[m][5])*p + embed->spline[m][6];
     return (s.spline[0] * s.p + s.spline[1]) * s.p + s.spline[2];
+}
+
+double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
+    const InterpolationObject *embed = embedded.getEamItemByType(_atom_key);
+    const SplineData s = embed->findSpline(rho);
+    return ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
+}
+
+double eam::pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
+                          const double dist2) {
+    const InterpolationObject *phi_spline = eam_phi.getPhiByEamPhiByType(key_from, key_to);
+    const double r = sqrt(dist2);
+
+    const SplineData s = phi_spline->findSpline(r);
+    const double phi_r = ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6]; // pair_pot * r
+    return phi_r / r;
 }

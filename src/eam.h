@@ -61,6 +61,20 @@ public:
      */
     double dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho);
 
+    /**
+     * compute embedded energy of atom of type {@var _atom_type}
+     * @param _atom_key n atom type
+     * @param rho electron charge density contributed by all its neighbor atoms.
+     * @return embedded energy of this atom.
+     */
+    double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho);
+
+    /**
+     * pair potential energy.
+     * @return pair potential energy.
+     */
+    double pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
+                         const double dist2);
 
     /**
      * @deprecated
