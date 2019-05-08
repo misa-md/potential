@@ -58,6 +58,7 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
     z2 = ((spline[m][3] * p + spline[m][4]) * p + spline[m][5]) * p + spline[m][6]; // z2 = phi*r
     z2p = (spline[m][0] * p + spline[m][1]) * p + spline[m][2]; // z2p = (phi * r)' = (phi' * r) + phi
 
+    // fixme the index m of electron spline should recompute ?
     double *spline_m = electron_spline_from->spline[m];
     const double rho_p_from = (spline_m[0] * p + spline_m[1]) * p + spline_m[2];
     spline_m = electron_spline_to->spline[m];
@@ -72,7 +73,7 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
     return fpair;
 }
 
-double eam::rhoContribution(const atom_type::_type_prop_key _atom_key, const double dist2) {
+double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) {
     const InterpolationObject *electron_spline = electron_density.getEamItemByType(_atom_key);
 
     double r = sqrt(dist2);
@@ -82,11 +83,12 @@ double eam::rhoContribution(const atom_type::_type_prop_key _atom_key, const dou
     m = std::max(1, std::min(m, (nr - 1)));
     p -= m;
     p = std::min(p, 1.0);
+
     return ((electron_spline->spline[m][3] * p + electron_spline->spline[m][4]) * p
             + electron_spline->spline[m][5]) * p + electron_spline->spline[m][6];
 }
 
-double eam::embedEnergyContribution(const atom_type::_type_prop_key _atom_key, const double rho) {
+double eam::dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
     const InterpolationObject *embed = embedded.getEamItemByType(_atom_key);
     int nr = embed->n;
     double p = rho * embed->invDx + 1.0;

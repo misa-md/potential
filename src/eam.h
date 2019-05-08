@@ -44,22 +44,23 @@ public:
                    const double dist2, const double df_from, const double df_to);
 
     /**
-     * compute the contribution to electron charge density from atom j of type {@var _atom_type} at location of one atom i.
+     * compute the contribution to electron charge density from atom j of type {@var _atom_key} at location of one atom i.
      * whose distance is specified by {@var dist2}
      * @param _atom_key atom type of atom j.
      * @param dist2 the square of the distance between atom i and atom j.
      * @return the contribution to electron charge density from atom j.
      */
-    double rhoContribution(const atom_type::_type_prop_key _atom_key, const double dist2);
+    double chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2);
 
     /**
      * compute derivative of embedded energy of atom of type {@var _atom_type},
      * whose electron charge density contributed by its neighbor atoms is specified by {@var rho}.
      * @param _atom_key atom type
      * @param rho  electron charge density contributed by all its neighbor atoms.
-     * @return embedded energy of this atom.
+     * @return derivative of embedded energy of this atom.
      */
-    double embedEnergyContribution(const atom_type::_type_prop_key _atom_key, const double rho);
+    double dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho);
+
 
     /**
      * @deprecated
