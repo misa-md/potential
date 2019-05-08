@@ -53,7 +53,7 @@ public:
     double rhoContribution(const atom_type::_type_prop_key _atom_key, const double dist2);
 
     /**
-     * compute embedded energy of atom of type {@var _atom_type},
+     * compute derivative of embedded energy of atom of type {@var _atom_type},
      * whose electron charge density contributed by its neighbor atoms is specified by {@var rho}.
      * @param _atom_key atom type
      * @param rho  electron charge density contributed by all its neighbor atoms.
