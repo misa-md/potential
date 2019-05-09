@@ -1,0 +1,35 @@
+# image:
+image: hpcer/hpcdev:pkg-0.2.0
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - vendor/
+
+stages:
+  - fetch
+  - build
+
+fetch:
+  stage: fetch
+  tags:
+    - cpp
+    - mpi
+  script:
+    - pkg fetch
+    - pkg install
+  artifacts:
+    untracked: true
+
+build:
+  stage: build
+  tags:
+    - cpp
+    - mpi
+  script:
+    - cmake -Bcmake-build -DCMAKE_BUILD_TYPE=Debug -H.
+    - make -Ccmake-build
+  # artifacts:
+    # untracked: true
+  dependencies:
+    - fetch

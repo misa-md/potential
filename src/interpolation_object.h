@@ -6,6 +6,11 @@
 
 #include <mpi.h>
 
+struct SplineData {
+    double (*spline); // spline (it is a 1d array with length 7.)
+    double p; // x value in ax^3+bx^2+c for calculating interpolation result.
+};
+
 class InterpolationObject {
 public:
     InterpolationObject();
@@ -22,6 +27,11 @@ public:
     void initInterpolationObject(const int _n, const double _x0, const double dx, double data[]);
 
     void bcastInterpolationObject(const int root, const int rank, MPI_Comm comm);
+
+    /**
+     * given a real value on x axis, find the corresponding spline and value p.
+     */
+    SplineData findSpline(const double value) const;
 
     void interpolateFile();
 
