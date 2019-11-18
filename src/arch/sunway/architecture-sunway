@@ -1,2 +1,0 @@
-Sunway MPP, Sunway SW26010 260C 1.45GHz, on Sunway TaihuLight.
-site: National Supercomputing Center in Wuxi, http://nsccwx.cn
