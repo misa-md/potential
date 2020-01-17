@@ -31,7 +31,14 @@ public:
     /**
      * given a real value on x axis, find the corresponding spline and value p.
      */
-    SplineData findSpline(const double value) const;
+    inline SplineData findSpline(const double value) const {
+        double p = value * invDx + 1.0;
+        int m = static_cast<int> (p);
+        m = std::max(1, std::min(m, (n - 1)));
+        p -= m;
+        p = std::min(p, 1.0);
+        return SplineData{spline[m], p};
+    }
 
     void interpolateFile();
 

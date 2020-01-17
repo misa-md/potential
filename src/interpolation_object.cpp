@@ -88,13 +88,3 @@ void InterpolationObject::interpolateFile() {
         spline[m][0] = 3.0 * spline[m][3] * invDx;
     }
 }
-
-SplineData InterpolationObject::findSpline(const double value) const {
-    const int nr = n;
-    double p = value * invDx + 1.0;
-    int m = static_cast<int> (p);
-    m = std::max(1, std::min(m, (nr - 1)));
-    p -= m;
-    p = std::min(p, 1.0);
-    return SplineData{spline[m], p};
-}
