@@ -9,4 +9,4 @@ target: pot
 
 dependencies:
   packages:
-    github.com/google/googletest: {version: release-1.8.1, target: GTest}
+    github.com/google/googletest: {version: release-1.10.0, target: GTest}
