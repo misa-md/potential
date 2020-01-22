@@ -22,10 +22,18 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 add_executable(${POT_UINT_TEST_NAME} ${TEST_SOURCE_FILES} ${TEST_HEADER_FILES})
 
 # Extra linking for the project.
-# Extra linking for the project.
-target_link_libraries(${POT_UINT_TEST_NAME}
-        PRIVATE GTest::gtest GTest::gtest_main ${POT_LIB_NAME} ${POT_EXTRA_LIBS}
-        )
+if (TARGET GTest::gtest AND TARGET GTest::gtest_main)
+    # googletest is added by `find_package(GTest)`
+    target_link_libraries(${POT_UINT_TEST_NAME}
+            PRIVATE GTest::gtest GTest::gtest_main ${POT_LIB_NAME} ${POT_EXTRA_LIBS}
+            )
+else ()
+    # googletest is added by `add_subdirectory`
+    target_link_libraries(${POT_UINT_TEST_NAME}
+            PRIVATE gtest gtest_main ${POT_LIB_NAME} ${POT_EXTRA_LIBS}
+            )
+endif ()
+
 # This is so you can do 'make test' to see all your tests run, instead of
 # manually running the executable runUnitTests to see those specific tests.
 add_test(NAME unit-test COMMAND ${POT_UINT_TEST_NAME})
