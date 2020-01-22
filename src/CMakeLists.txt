@@ -52,6 +52,9 @@ set(POT_LIB_CMAKE_NAMESPACE ${POT_LIB_NAME}::)
 set(POT_LIB_CMAKE_CONFIG_IN "${POT_LIB_NAME}-config.cmake.in")
 set(POT_LIB_CMAKE_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/${POT_LIB_NAME}-config.cmake")
 
+# lib alias to makes it possible to always use the namespace version consistently
+add_library(${POT_LIB_NAME}::${POT_LIB_NAME} ALIAS ${POT_LIB_NAME})
+
 ##########################
 ##### install files
 ##########################
