@@ -6,21 +6,19 @@
 #ifndef POT_FUNL_PARSER_H
 #define POT_FUNL_PARSER_H
 
-
 #include "parser.h"
 
 class FuncflParser : public Parser {
 public:
-    explicit FuncflParser(const std::string filename);
+  explicit FuncflParser(const std::string filename);
 
-    void parseHeader() override;
+  void parseHeader() override;
 
-    void parseBody(eam *eam_instance) override;
+  void parseBody(eam *eam_instance) override;
 
 private:
-    int nRho, nR; // at line 3 in header.
-    double dRho, dR, cutoff; // at line 3 in header
+  int nRho, nR;            // at line 3 in header.
+  double dRho, dR, cutoff; // at line 3 in header
 };
 
-
-#endif //POT_FUNL_PARSER_H
+#endif // POT_FUNL_PARSER_H
