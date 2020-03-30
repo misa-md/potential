@@ -10,10 +10,10 @@ set(AppName pot)
 #set(CMAKE_C_COMPILER mpicc -cc=gcc -cxx=g++)
 #set(CMAKE_CXX_COMPILER mpicxx -cc=gcc -cxx=g++)
 
-option(OpenMP_ENABLE_FLAG "Use OpenMP" OFF) #change this flag to OFF to disable OpenMP
-option(MPI_ENABLE_FLAG "Use MPI library" ON) #change this flag to false to disable mpi
-option(TEST_BUILD_ENABLE_FLAG "Enable building test" ON) # enable test
-option(TEST_MPI_ENABLE_FLAG "Enable MPI in test" ON) # enable mpi in test, its value depends on option MPI_ENABLE_FLAG.
+option(POT_OpenMP_ENABLE_FLAG "Use OpenMP" OFF) #change this flag to OFF to disable OpenMP
+option(POT_MPI_ENABLE_FLAG "Use MPI library" ON) #change this flag to false to disable mpi
+option(POT_TEST_BUILD_ENABLE_FLAG "Enable building test" ON) # enable test
+option(POT_TEST_MPI_ENABLE_FLAG "Enable MPI in test" ON) # enable mpi in test, its value depends on option POT_MPI_ENABLE_FLAG.
 
 ## architecture ralated values.
 option(POT_ARCH_SW "Enable sunway athread" OFF) # enable sunway athread if its running on sunway system.

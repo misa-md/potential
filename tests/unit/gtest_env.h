@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include "test_config.h"
 
-#  ifdef TEST_MPI_ENABLE_FLAG
+#  ifdef POT_TEST_MPI_ENABLE_FLAG
 #    include "mpi.h"
 
 class MPIEnvironment : public ::testing::Environment {
@@ -26,15 +26,15 @@ public:
 
     virtual ~MPIEnvironment() {}
 };
-#  endif  // end TEST_MPI_ENABLE_FLAG
+#  endif  // end POT_TEST_MPI_ENABLE_FLAG
 
 // see https://github.com/google/googletest/issues/822 for more information.
 // main function for adapt mpi environment
 int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
-#ifdef TEST_MPI_ENABLE_FLAG
+#ifdef POT_TEST_MPI_ENABLE_FLAG
     ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-#endif  // end TEST_MPI_ENABLE_FLAG
+#endif  // end POT_TEST_MPI_ENABLE_FLAG
     return RUN_ALL_TESTS();
 }
 #endif // _GTEST_ENV_H

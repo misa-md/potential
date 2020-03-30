@@ -2,7 +2,7 @@
 #ifndef POT_BUILDING_CONFIG_H
 #define POT_BUILDING_CONFIG_H
 
-#cmakedefine MPI_ENABLE_FLAG
+#cmakedefine POT_MPI_ENABLE_FLAG
 #cmakedefine POT_ARCH_SW
 
 #endif // POT_BUILDING_CONFIG_H

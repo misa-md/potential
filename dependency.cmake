@@ -1,7 +1,7 @@
 ################################
 # MPI and OpenMP
 ################################
-if (OpenMP_ENABLE_FLAG)
+if (POT_OpenMP_ENABLE_FLAG)
     find_package(OpenMP REQUIRED)
 
     if (OPENMP_FOUND)
@@ -11,7 +11,7 @@ if (OpenMP_ENABLE_FLAG)
     endif ()
 endif ()
 
-if (MPI_ENABLE_FLAG)
+if (POT_MPI_ENABLE_FLAG)
     find_package(MPI REQUIRED)
     MESSAGE(STATUS "MPI_INCLUDE dir:" ${MPI_INCLUDE_PATH})
     MESSAGE(STATUS "MPI_LIBRARIES dir:" ${MPI_LIBRARIES})
