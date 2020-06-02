@@ -90,3 +90,24 @@ double eam::pairPotential(const atom_type::_type_prop_key key_from, const atom_t
   const double phi_r = ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6]; // pair_pot * r
   return phi_r / r;
 }
+
+std::vector<size_t> eam::dataTableSizes(const std::vector<atom_type::_type_prop_key> &elements) {
+  const size_t n_eles = elements.size();
+  std::vector<size_t> sizes;
+  sizes.reserve((2 * n_eles + (n_eles + 1) * n_eles / 2));
+  // for data size of electron charge density
+  for (atom_type::_type_prop_key ele : elements) {
+    sizes.emplace_back(electron_density.getEamItemByType(ele)->n);
+  }
+  // for data size of embedded energy
+  for (atom_type::_type_prop_key ele : elements) {
+    sizes.emplace_back(electron_density.getEamItemByType(ele)->n);
+  }
+  // for data size of pair potential
+  for (size_t i = 0; i < n_eles; i++) {
+    for (size_t j = 0; j < i; j++) {
+      sizes.emplace_back(eam_phi.getPhiByEamPhiByType(elements[i], elements[j])->n);
+    }
+  }
+  return sizes;
+}

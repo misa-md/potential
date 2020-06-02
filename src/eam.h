@@ -84,6 +84,19 @@ public:
   void setlatticeType(char *_latticeType);
 
   /**
+   * given a list of elements, it returns size of the origin data for each element.
+   * For example, the length of input elements is N,
+   * then the return value will contain (N+N+N*(N+1)/2) values,
+   * and each of them represent the size of corresponding origin potential data table.
+   * They are listed as following:
+   * N data size for electron charge density; N data size for embedded energy and N*(N+1)/2 data size for pair potential
+   * energy.
+   * @param elements the elements list
+   * @return size of the origin data tables for each element.
+   */
+  std::vector<size_t> dataTableSizes(const std::vector<atom_type::_type_prop_key> &elements);
+
+  /**
    * get the elements count involved in.
    * @return elements count.
    */
