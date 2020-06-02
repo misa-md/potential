@@ -8,7 +8,7 @@
 
 struct SplineData {
   double(*spline); // spline (it is a 1d array with length 7.)
-  double p;        // x value in ax^3+bx^2+c for calculating interpolation result.
+  double p;        // x value in ax^3+bx^2+cx+d for calculating interpolation result.
 };
 
 class InterpolationObject {
@@ -42,7 +42,8 @@ public:
 
   void interpolateFile();
 
-  int n;        //!< 表中数据个数
+public:
+  int n;        //!< 表中数据个数 todo: use unsigned int
   double x0;    //!< 起始点
   double invDx; //!< 倒数
   double *values;

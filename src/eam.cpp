@@ -33,7 +33,7 @@ void eam::interpolateFile() {
 double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
                     const double dist2, const double df_from, const double df_to) {
   double fpair;
-  double recip, phi, phip, psip, z2, z2p;
+  double phi, phip, psip, z2, z2p;
 
   const InterpolationObject *phi_spline = eam_phi.getPhiByEamPhiByType(key_from, key_to);
   const InterpolationObject *electron_spline_from = electron_density.getEamItemByType(key_from);
@@ -53,7 +53,7 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
       (ele_from_s.spline[0] * ele_from_s.p + ele_from_s.spline[1]) * ele_from_s.p + ele_from_s.spline[2];
   const double rho_p_to = (ele_to_s.spline[0] * ele_to_s.p + ele_to_s.spline[1]) * ele_to_s.p + ele_to_s.spline[2];
 
-  recip = 1.0 / r;
+  const double recip = 1.0 / r;
   phi = z2 * recip;                 // pair potential energy
   phip = z2p * recip - phi * recip; // phip = phi' = (z2p - phi)/r
   psip = df_from * rho_p_to + df_to * rho_p_from + phip;

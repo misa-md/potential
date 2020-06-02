@@ -45,8 +45,8 @@ public:
                  const double df_from, const double df_to);
 
   /**
-   * compute the contribution to electron charge density from atom j of type {@var _atom_key} at location of one atom
-   * i. whose distance is specified by {@var dist2}
+   * compute the contribution to electron charge density from atom j of type {@var _atom_key} at location of one atom i.
+   * whose distance is specified by {@var dist2}
    * @param _atom_key atom type of atom j.
    * @param dist2 the square of the distance between atom i and atom j.
    * @return the contribution to electron charge density from atom j.
