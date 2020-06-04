@@ -17,10 +17,9 @@ void SetflParser::parseHeader() {
   fgets(tmp, sizeof(tmp), pot_file);
   fgets(tmp, sizeof(tmp), pot_file);
 
-  // 第四行
+  // line 4 in file
   fgets(tmp, sizeof(tmp), pot_file);
-  //    int nElemTypees;
-  sscanf(tmp, "%hu", &elements_size); // 原子类型个数
+  sscanf(tmp, "%hu", &file_ele_size); // 原子类型个数
 
   //    eam_instance->initElementN(nElemTypes);// 从文件中读入原子类型个数后, 对势函数进行初始化.
   // todo delete.
@@ -41,12 +40,12 @@ void SetflParser::parseHeader() {
   }
   int nwords = n;
   delete[] copy;
-  if (nwords != elements_size + 1) {
+  if (nwords != file_ele_size + 1) {
     printf("Incorrect element names in EAM potential file!");
     // todo MPI abort.
   }
 
-  char **words = new char *[elements_size + 1];
+  char **words = new char *[file_ele_size + 1];
   nwords = 0;
   strtok(tmp, " \t\n\r\f");
   while ((words[nwords++] = strtok(nullptr, " \t\n\r\f"))) {
@@ -62,35 +61,45 @@ void SetflParser::parseHeader() {
 void SetflParser::parseBody(eam *eam_instance) {
   // 申请读取数据空间
   char tmp[4096];
-  int bufSize = std::max(nRho, nR);
+  const int bufSize = std::max(nRho, nR);
   double *buf = new double[bufSize];
   double x0 = 0.0; // fixme start from 0 ??
-  atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[elements_size];
+  atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
   // 每种原子信息
-  for (int i = 0; i < elements_size; i++) {
+  for (int i = 0; i < file_ele_size; i++) {
     fgets(tmp, sizeof(tmp), pot_file);
     atom_type::_type_atomic_no nAtomic;
     double mass, lat;    // mass, lattice const
     char latticeType[8]; // lattice type.
     sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
-    atom_type::_type_prop_key key = type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff); // todo ele name
+
+    atom_type::_type_prop_key key = AtomPropsList::makeId(nAtomic);
     prop_key_list[i] = key;
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff); // todo ele name
+    }
 
     // 读取嵌入能表
     grab(pot_file, nRho, buf);
-    eam_instance->embedded.append(key, nRho, x0, dRho, buf);
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      eam_instance->embedded.append(key, nRho, x0, dRho, buf);
+    }
 
     // 读取电子云密度表
     grab(pot_file, nR, buf);
-    eam_instance->electron_density.append(key, nR, x0, dR, buf);
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      eam_instance->electron_density.append(key, nR, x0, dR, buf);
+    }
   }
 
   //读取对势表
   int i, j;
-  for (i = 0; i < elements_size; i++) {
+  for (i = 0; i < file_ele_size; i++) {
     for (j = 0; j <= i; j++) {
       grab(pot_file, nR, buf);
-      eam_instance->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
+      if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
+        eam_instance->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
+      }
     }
   }
   delete[] buf;

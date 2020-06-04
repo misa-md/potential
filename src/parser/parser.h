@@ -21,6 +21,19 @@ public:
   explicit Parser(const std::string filename);
 
   /**
+   * When parsing potential file, we only consider the element types in @param ele_types.
+   * @note: If @param ele_types is empty, consider all element provided in potential file.
+   * @param ele_types considered element types when parsing potential file.
+   */
+  void setFilterEleTypes(std::vector<atom_type::_type_prop_key> ele_types);
+
+  /**
+   * To check whether the element types filtering is enabled.
+   * @return true for enabling element types filtering, false for otherwise.
+   */
+  inline bool isEleTypesFilterEnabled() const { return !(filter_ele_types.empty()); }
+
+  /**
    * parsing header of potential file, and get necessary data such as elements count.
    */
   virtual void parseHeader() = 0;
@@ -33,15 +46,25 @@ public:
 
   virtual void done();
 
-  // get the elements count.
-  inline atom_type::_type_atom_types getEles() { return elements_size; }
+  // get the real elements count.
+  atom_type::_type_atom_types getEles() const;
 
 protected:
   // the size/count of elements in potential file.
-  atom_type::_type_atom_types elements_size;
+  atom_type::_type_atom_types file_ele_size;
+  // the size/count of element after filtering.
+  atom_type::_type_atom_types filter_ele_size;
+  std::vector<atom_type::_type_prop_key> filter_ele_types;
   FILE *pot_file;
 
   void grab(FILE *fptr, int n, double *list);
+
+  /**
+   * check whether an element type is in the filtering list.
+   * @param key id of the element type
+   * @return true for existing, false for otherwise.
+   */
+  bool isInFilterList(const atom_type::_type_prop_key key);
 
 private:
   const std::string pot_filename;
