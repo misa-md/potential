@@ -5,6 +5,8 @@
 #ifndef POT_INTERPOLATION_LISTS_H
 #define POT_INTERPOLATION_LISTS_H
 
+#include <type_traits> // std::is_base_of
+
 #include "data_structure/array_map.hpp"
 #include "interpolation_object.h"
 #include "types.h"
