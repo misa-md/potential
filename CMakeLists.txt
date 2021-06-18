@@ -13,7 +13,7 @@ add_subdirectory(examples)
 ##############################
 ## test configure
 ##############################
-if (TEST_BUILD_ENABLE_FLAG)
+if (POT_TEST_BUILD_ENABLE_FLAG)
     MESSAGE(STATUS "TEST is enabled")
     enable_testing()
     add_subdirectory(tests)

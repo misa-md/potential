@@ -1,5 +1,5 @@
 # image:
-image: hpcer/hpcdev:pkg-0.2.0
+image: genshen/pkg:0.4.1-clang10-mpi
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
@@ -12,6 +12,9 @@ stages:
 
 fetch:
   stage: fetch
+  image:
+    name: genshen/pkg:0.4.1-clang10-mpi
+    entrypoint: [ "" ]
   tags:
     - cpp
     - mpi
@@ -23,6 +26,9 @@ fetch:
 
 build:
   stage: build
+  image:
+    name: genshen/pkg:0.4.1-clang10-mpi
+    entrypoint: [ "" ]
   tags:
     - cpp
     - mpi

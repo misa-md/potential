@@ -5,48 +5,69 @@
 #ifndef POT_PARSER_H
 #define POT_PARSER_H
 
-#include <string>
-#include "types.h"
-#include "eam.h"
 #include "atom_type_lists.h"
+#include "eam.h"
+#include "types.h"
+#include <string>
 
 /**
  * parse eam potential file.
  */
 class Parser {
 public:
-    // all types are saved in this object while parsing.
-    AtomPropsList type_lists;
+  // all types are saved in this object while parsing.
+  AtomPropsList type_lists;
 
-    explicit Parser(const std::string filename);
+  explicit Parser(const std::string filename);
 
-    /**
-     * parsing header of potential file, and get necessary data such as elements count.
-     */
-    virtual void parseHeader() = 0;
+  /**
+   * When parsing potential file, we only consider the element types in @param ele_types.
+   * @note: If @param ele_types is empty, consider all element provided in potential file.
+   * @param ele_types considered element types when parsing potential file.
+   */
+  void setFilterEleTypes(std::vector<atom_type::_type_prop_key> ele_types);
 
-    /**
-     * parse body of potential file, and save data in potential file to eam instance
-     * @param eam_instance the pointer to eam.
-     */
-    virtual void parseBody(eam *eam_instance) = 0;
+  /**
+   * To check whether the element types filtering is enabled.
+   * @return true for enabling element types filtering, false for otherwise.
+   */
+  inline bool isEleTypesFilterEnabled() const { return !(filter_ele_types.empty()); }
 
-    virtual void done();
+  /**
+   * parsing header of potential file, and get necessary data such as elements count.
+   */
+  virtual void parseHeader() = 0;
 
-    // get the elements count.
-    inline atom_type::_type_atom_types getEles() {
-        return elements_size;
-    }
+  /**
+   * parse body of potential file, and save data in potential file to eam instance
+   * @param eam_instance the pointer to eam.
+   */
+  virtual void parseBody(eam *eam_instance) = 0;
+
+  virtual void done();
+
+  // get the real elements count.
+  atom_type::_type_atom_types getEles() const;
 
 protected:
-    // the size/count of elements in potential file.
-    atom_type::_type_atom_types elements_size;
-    FILE *pot_file;
+  // the size/count of elements in potential file.
+  atom_type::_type_atom_types file_ele_size;
+  // the size/count of element after filtering.
+  atom_type::_type_atom_types filter_ele_size;
+  std::vector<atom_type::_type_prop_key> filter_ele_types;
+  FILE *pot_file;
 
-    void grab(FILE *fptr, int n, double *list);
+  void grab(FILE *fptr, int n, double *list);
+
+  /**
+   * check whether an element type is in the filtering list.
+   * @param key id of the element type
+   * @return true for existing, false for otherwise.
+   */
+  bool isInFilterList(const atom_type::_type_prop_key key);
 
 private:
-    const std::string pot_filename;
+  const std::string pot_filename;
 };
 
-#endif //POT_PARSER_H
+#endif // POT_PARSER_H

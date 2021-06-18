@@ -3,6 +3,6 @@
 #define POT_TEST_CONFIG_H
 
 #cmakedefine GOOGLE_TEST_ENABLE_FLAG
-#cmakedefine TEST_MPI_ENABLE_FLAG
+#cmakedefine POT_TEST_MPI_ENABLE_FLAG
 
 #endif // POT_TEST_CONFIG_H
