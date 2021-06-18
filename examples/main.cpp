@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
                          1.851699;//lattice_const * lattice_const / 16;// pow(me[0] - nei[0], 2) + pow(me[1] - nei[1], 2) + pow(me[2] - nei[2], 2);
     const double df_a = 0.15;
     const double df_b = 0.15;
-    std::cout << sqrt(dist2 / lattice_const / lattice_const) << "\t" << _pot->toForce(29, 29, dist2, df_a, df_b)
+    std::cout << sqrt(dist2 / lattice_const / lattice_const) << "\t" << _pot->toForce(0, 0, dist2, df_a, df_b)
               << std::endl;
     // Finalize the MPI environment.
     MPI_Finalize();
