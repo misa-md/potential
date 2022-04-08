@@ -24,6 +24,7 @@ void InterpolationObject::initInterpolationObject(const int _n, const double _x0
   for (int ii = 0; ii < n; ++ii) {
     values[ii + 1] = data[ii];
   }
+  max_val = _x0 + (n - 1) * dx;
   // todo where is values[0]?
 }
 

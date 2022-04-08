@@ -75,10 +75,16 @@ double eam::dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double
   return (s.spline[0] * s.p + s.spline[1]) * s.p + s.spline[2];
 }
 
-double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
+double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho) {
   const InterpolationObject *embed = embedded.getEamItemByType(_atom_key);
   const SplineData s = embed->findSpline(rho);
-  return ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
+  double phi = ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
+  if (rho > max_rho) {
+    // rho will exceed table, we add a linear term to it.
+    const double fp = (s.spline[0] * s.p + s.spline[1]) * s.p + s.spline[2]; // or: dEmbedEnergy(_atom_key, rho);
+    phi += fp * (rho - max_rho);
+  }
+  return phi;
 }
 
 double eam::pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,

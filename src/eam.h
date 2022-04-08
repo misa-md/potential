@@ -66,9 +66,10 @@ public:
    * compute embedded energy of atom of type {@var _atom_type}
    * @param _atom_key n atom type
    * @param rho electron charge density contributed by all its neighbor atoms.
+   * @param max_rho the max value of rho in `embedded` table. Because rho may exceed the table, we add a liner term to correct it.
    * @return embedded energy of this atom.
    */
-  double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho);
+  double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho);
 
   /**
    * pair potential energy.
