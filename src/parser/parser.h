@@ -5,7 +5,7 @@
 #ifndef POT_PARSER_H
 #define POT_PARSER_H
 
-#include "atom_type_lists.h"
+#include "container/atom_type_lists.h"
 #include "eam.h"
 #include "types.h"
 #include <string>
