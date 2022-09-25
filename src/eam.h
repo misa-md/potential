@@ -5,6 +5,7 @@
 #ifndef CRYSTAL_MD_EAM_H
 #define CRYSTAL_MD_EAM_H
 
+#include "container/linear_array.hpp"
 #include "eam_one_way.h"
 #include "eam_phi.h"
 #include "types.h"
@@ -13,10 +14,10 @@ class eam {
   friend class SetflParser; // todo better permission.
 
 public:
-  EamPhiList eam_phi; // pair potentials for N types elements.
+  PairLinearArray eam_phi; // pair potentials for N types elements.
 
-  OneWayEamList electron_density; //!< 电子云密度
-  OneWayEamList embedded;         //!< 嵌入能
+  LinearArray electron_density; //!< 电子云密度
+  LinearArray embedded;         //!< 嵌入能
 
   /**
    * create a new eam instance by the elements count from root processor with size {@var n_ele} types elements.

@@ -17,6 +17,7 @@ typedef InterpolationLists<atom_type::_type_prop_key, OneWayEam> _type_one_way_m
 
 /**
  * electron charge density and embedded energy items for N elements.
+ * @deprecated
  */
 class OneWayEamList {
 public:
