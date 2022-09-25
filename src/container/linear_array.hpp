@@ -67,7 +67,7 @@ public:
   }
 
   void sync(const int root, const int rank, MPI_Comm comm) {
-    // sync size of array map.
+    // the size of data elements may be different on each process, make them the same.
     MPI_Bcast(&len, 1, MPI_Type_EleSize, root, comm);
     data.resize(len); // make the size the same on all processors.
 
@@ -77,14 +77,15 @@ public:
     }
   }
 
+  /**
+   * For api compatibility for deprecated OneWayEam
+   * \param size element size in simulation system.
+   * \param root MPI bcast root process
+   * \param rank current MPI rank
+   * \param comm MPI communicator.
+   */
   void sync(const array_map::type_map_size size, const int root, const int rank, MPI_Comm comm) {
-    // the size of data elements may be different on each process, make them the same.
-    this->len = size;
-    data.resize(size);
-    // sync values/data
-    for (array_map::type_map_index i = 0; i < size; i++) {
-      data[i]->bcastInterpolationObject(root, rank, comm);
-    }
+    sync(root, rank, comm);
   }
 
 public:
