@@ -68,6 +68,18 @@ public:
   double chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2);
 
   /**
+   * compute the contribution to electron charge density from atom j of type {@var _atom_key2}
+   * at location of one atom i of type {@var _atom_key1}.
+   * It is used in eam/fs potential style.
+   * @param _atom_key1 atom type of atom i.
+   * @param _atom_key2 atom type of atom j.
+   * @param dist2 distance of the two atoms.
+   * @return the contribution to electron charge density
+   */
+  double chargeDensity(const atom_type::_type_prop_key _atom_key1, const atom_type::_type_prop_key _atom_key2,
+                       const double dist2);
+
+  /**
    * compute derivative of embedded energy of atom of type {@var _atom_type},
    * whose electron charge density contributed by its neighbor atoms is specified by {@var rho}.
    * @param _atom_key atom type
@@ -104,6 +116,19 @@ public:
    * @return elements count.
    */
   inline atom_type::_type_atom_types geEles() const { return _n_eles; }
+
+private:
+  inline InterpolationObject *ele_charge_load_wrapper(const atom_type::_type_prop_key _atom_key_me,
+                                                      const atom_type::_type_prop_key _atom_key_nei) {
+    if (eam_style == EAM_STYLE_ALLOY) {
+      return eam_pot_loader->loadElectronDensity(_atom_key_nei);
+    } else if (eam_style == EAM_STYLE_FS) {
+      return eam_pot_loader->loadElectronDensity(_atom_key_me, _atom_key_nei);
+    } else {
+      printf("error: unspecified eam style.\n");
+      return nullptr;
+    }
+  }
 
 public:
   /**

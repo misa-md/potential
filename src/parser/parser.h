@@ -57,8 +57,6 @@ protected:
   std::vector<atom_type::_type_prop_key> filter_ele_types;
   FILE *pot_file;
 
-  void grab(FILE *fptr, int n, double *list);
-
   /**
    * check whether an element type is in the filtering list.
    * @param key id of the element type
