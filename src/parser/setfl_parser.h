@@ -17,6 +17,13 @@ public:
 
   void parseBody(eam *eam_instance) override;
 
+protected:
+  // parse eam file of "eam/alloy" style.
+  void parseBodyEamAlloy(EamAlloyLoader *pot_loader);
+
+  // parse eam file of "eam/fs" style.
+  void parseBodyEamFs(EamFsLoader *pot_loader);
+
 private:
   int nRho, nR;            // at line 5 in header.
   double dRho, dR, cutoff; // at line 5 in header

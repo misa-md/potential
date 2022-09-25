@@ -17,6 +17,7 @@ set(HEADER_FILES
         parser/funcfl_parser.h
         parser/parser.h
         parser/setfl_parser.h
+        pot_table_loader.h
         )
 
 set(SOURCE_FILES
@@ -29,6 +30,7 @@ set(SOURCE_FILES
         parser/funcfl_parser.cpp
         parser/parser.cpp
         parser/setfl_parser.cpp
+        pot_table_loader.cpp
         )
 
 # set(MAIN_FILE main.cpp)

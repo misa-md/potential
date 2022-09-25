@@ -15,21 +15,21 @@ public:
         const unsigned int rook_rank = 0;
         const unsigned int own_rank = 0;
         // todo support MPI: rank and root id
-        _pot = eam::newInstance(ELE_SIZE, rook_rank, own_rank, MPI_COMM_WORLD);
+        _pot = eam::newInstance(EAM_STYLE_ALLOY, ELE_SIZE, rook_rank, own_rank, MPI_COMM_WORLD);
         atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[ELE_SIZE];
 
         double buff[5000] = {};
         for (int i = 0; i < ELE_SIZE; i++) {
             int key = i; // key is atom number
             prop_key_list[i] = key;
-            _pot->embedded.append(key, DATA_SIZE, 0.0, 0.001, buff);
-            _pot->electron_density.append(key, DATA_SIZE, 0.0, 0.001, buff);
+            dynamic_cast<EamAlloyLoader *>(_pot->eam_pot_loader)->embedded.append(key, DATA_SIZE, 0.0, 0.001, buff);
+            dynamic_cast<EamAlloyLoader *>(_pot->eam_pot_loader)->electron_density.append(key, DATA_SIZE, 0.0, 0.001, buff);
         }
 
         int i, j;
         for (i = 0; i < ELE_SIZE; i++) {
             for (j = 0; j <= i; j++) {
-                _pot->eam_phi.append(prop_key_list[i], prop_key_list[j], DATA_SIZE, 0.0, 0.001, buff);
+              dynamic_cast<EamAlloyLoader *>(_pot->eam_pot_loader)->eam_phi.append(prop_key_list[i], prop_key_list[j], DATA_SIZE, 0.0, 0.001, buff);
             }
         }
 
@@ -46,13 +46,13 @@ BENCHMARK_F(EamFixture, FindPhiSpline)(benchmark::State &st) {
     const atom_type::_type_prop_key key_from = 0;
     const atom_type::_type_prop_key key_to = 1;
     for (auto _ : st) {
-        _pot->eam_phi.getPhiByEamPhiByType(key_from, key_to);
+      dynamic_cast<EamAlloyLoader *>(_pot->eam_pot_loader)->eam_phi.getPhiByEamPhiByType(key_from, key_to);
     }
 }
 
 BENCHMARK_F(EamFixture, FindEmbedSpline)(benchmark::State &st) {
     const atom_type::_type_prop_key key = 0;
     for (auto _ : st) {
-        _pot->embedded.getEamItemByType(key);
+        dynamic_cast<EamAlloyLoader *>(_pot->eam_pot_loader)->embedded.getEamItemByType(key);
     }
 }

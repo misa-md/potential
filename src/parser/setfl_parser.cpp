@@ -59,6 +59,16 @@ void SetflParser::parseHeader() {
 }
 
 void SetflParser::parseBody(eam *eam_instance) {
+  if (eam_instance->eam_style == EAM_STYLE_ALLOY) {
+    // parse eam potential file of style "eam/alloy"
+    parseBodyEamAlloy(dynamic_cast<EamAlloyLoader *>(eam_instance->eam_pot_loader));
+  } else if (eam_instance->eam_style == EAM_STYLE_FS) {
+    // parse eam potential file of style "eam/fs"
+    parseBodyEamFs(dynamic_cast<EamFsLoader *>(eam_instance->eam_pot_loader));
+  }
+}
+
+void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
   // 申请读取数据空间
   char tmp[4096];
   const int bufSize = std::max(nRho, nR);
@@ -82,13 +92,13 @@ void SetflParser::parseBody(eam *eam_instance) {
     // 读取嵌入能表
     grab(pot_file, nRho, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      eam_instance->embedded.append(key, nRho, x0, dRho, buf);
+      pot_loader->embedded.append(key, nRho, x0, dRho, buf);
     }
 
     // 读取电子云密度表
     grab(pot_file, nR, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      eam_instance->electron_density.append(key, nR, x0, dR, buf);
+      pot_loader->electron_density.append(key, nR, x0, dR, buf);
     }
   }
 
@@ -98,10 +108,14 @@ void SetflParser::parseBody(eam *eam_instance) {
     for (j = 0; j <= i; j++) {
       grab(pot_file, nR, buf);
       if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
-        eam_instance->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
+        pot_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
       }
     }
   }
   delete[] buf;
   delete[] prop_key_list;
+}
+
+void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
+  // todo
 }

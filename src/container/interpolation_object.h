@@ -4,6 +4,7 @@
 #ifndef CRYSTAL_MD_INTERPOLATION_OBJECT_H
 #define CRYSTAL_MD_INTERPOLATION_OBJECT_H
 
+#include <algorithm>
 #include <mpi.h>
 
 struct SplineData {
