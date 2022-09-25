@@ -6,12 +6,13 @@
 #ifndef POT_SETFL_PARSER_H
 #define POT_SETFL_PARSER_H
 
+#include "eam_base_parser.hpp"
 #include "parser.h"
 
 // parser for parsing potential file of "setdl" format.
-class SetflParser : public Parser {
+class SetflParser : public EamBaseParse {
 public:
-  explicit SetflParser(const std::string filename);
+  explicit SetflParser(const std::string &filename);
 
   void parseHeader() override;
 

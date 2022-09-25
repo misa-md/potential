@@ -34,8 +34,8 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
   double phi, phip, psip, z2, z2p;
 
   const InterpolationObject *phi_spline = eam_pot_loader->loadEamPhi(key_from, key_to);
-  const InterpolationObject *electron_spline_from = eam_pot_loader->loadElectronDensity(key_from);
-  const InterpolationObject *electron_spline_to = eam_pot_loader->loadElectronDensity(key_to);
+  const InterpolationObject *electron_spline_from = ele_charge_load_wrapper(key_from, key_to);
+  const InterpolationObject *electron_spline_to = ele_charge_load_wrapper(key_to, key_from);
 
   const double r = sqrt(dist2);
   const SplineData phi_s = phi_spline->findSpline(r);
@@ -63,6 +63,14 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
 
 double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) {
   const InterpolationObject *electron_spline = eam_pot_loader->loadElectronDensity(_atom_key);
+  const double r = sqrt(dist2);
+  const SplineData s = electron_spline->findSpline(r);
+  return ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
+}
+
+double eam::chargeDensity(const atom_type::_type_prop_key _atom_key_me, const atom_type::_type_prop_key _atom_key_nei,
+                          const double dist2) {
+  const InterpolationObject *electron_spline = eam_pot_loader->loadElectronDensity(_atom_key_me, _atom_key_nei);
   const double r = sqrt(dist2);
   const SplineData s = electron_spline->findSpline(r);
   return ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];

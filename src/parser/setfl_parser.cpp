@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 
-SetflParser::SetflParser(const std::string filename) : Parser(filename) {}
+SetflParser::SetflParser(const std::string &filename) : EamBaseParse(filename) {}
 
 void SetflParser::parseHeader() {
   char tmp[4096];
@@ -117,5 +117,48 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
 }
 
 void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
-  // todo
+  char tmp[4096];
+  const int bufSize = std::max(nRho, nR);
+  double *buf = new double[bufSize];
+  double x0 = 0.0; // fixme start from 0 ??
+  atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
+
+  for (int i = 0; i < file_ele_size; i++) {
+    fgets(tmp, sizeof(tmp), pot_file);
+    atom_type::_type_atomic_no nAtomic;
+    double mass, lat;    // mass, lattice const
+    char latticeType[8]; // lattice type.
+    sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
+
+    atom_type::_type_prop_key key = AtomPropsList::makeId(i);
+    prop_key_list[i] = key;
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff); // todo ele name
+    }
+    // read embedded energy table
+    grab(pot_file, nRho, buf);
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      pot_loader->embedded.push_back(nRho, x0, dRho, buf);
+    }
+    // read electron charge density
+    for (int j = 0; j < file_ele_size; j++) {
+      grab(pot_file, nR, buf);
+      atom_type::_type_prop_key key2 = j;
+      if (!isEleTypesFilterEnabled() || (isInFilterList(key) && isInFilterList(key))) {
+        pot_loader->electron_density.push_back(nR, x0, dR, buf);
+      }
+    }
+  }
+
+  // read pair potentials
+  int i, j;
+  for (i = 0; i < file_ele_size; i++) {
+    for (j = 0; j <= i; j++) {
+      grab(pot_file, nR, buf);
+      if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
+        pot_loader->eam_phi.push_back(nR, x0, dR, buf);
+      }
+    }
+  }
+  delete[] buf;
 }
