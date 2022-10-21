@@ -69,7 +69,11 @@ public:
   void sync(const int root, const int rank, MPI_Comm comm) {
     // the size of data elements may be different on each process, make them the same.
     MPI_Bcast(&len, 1, MPI_Type_EleSize, root, comm);
-    data.resize(len); // make the size the same on all processors.
+
+    for (std::size_t i = data.size(); i < len; i++) {
+      InterpolationObject *interpolation = new InterpolationObject();
+      data.push_back(interpolation); // make the size the same on all processors.
+    }
 
     // sync values/data
     for (array_map::type_map_index i = 0; i < len; i++) {
