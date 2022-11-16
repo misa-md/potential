@@ -2,8 +2,8 @@
 // Created by genshen on 2018-12-23.
 //
 
+#include <container/interpolation_lists.hpp>
 #include <gtest/gtest.h>
-#include <interpolation_lists.hpp>
 
 //@mpi test sync of broadcast.
 TEST(it_lists_test_sync, it_lists_test) {

@@ -37,21 +37,6 @@ bool Parser::isInFilterList(atom_type::_type_prop_key key) {
 
 void Parser::done() { fclose(pot_file); }
 
-void Parser::grab(FILE *fptr, int n, double *list) {
-  char *ptr;
-  char line[1024];
-
-  int i = 0;
-  while (i < n) {
-    fgets(line, 1024, fptr);
-    ptr = strtok(line, " \t\n\r\f");
-    list[i++] = atof(ptr);
-    while ((ptr = strtok(nullptr, " \t\n\r\f"))) {
-      list[i++] = atof(ptr);
-    }
-  }
-}
-
 atom_type::_type_atom_types Parser::getEles() const {
   if (isEleTypesFilterEnabled()) {
     return filter_ele_size;

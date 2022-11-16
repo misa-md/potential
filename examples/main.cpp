@@ -47,19 +47,13 @@ int main(int argc, char **argv) {
 
         std::cout << "parser->geEles():" << parser->getEles() << std::endl;
 
-        _pot = eam::newInstance(parser->getEles(),
-                                MASTER_PROCESSOR,
-                                own_rank,
-                                MPI_COMM_WORLD);
+        _pot = eam::newInstance(EAM_STYLE_ALLOY, parser->getEles(), MASTER_PROCESSOR, own_rank, MPI_COMM_WORLD);
         // MPIDomain::sim_processor.comm);
         // read data
         parser->parseBody(_pot); // todo parsing error.
         parser->done();
     } else {
-        _pot = eam::newInstance(0,
-                                MASTER_PROCESSOR,
-                                own_rank,
-                                MPI_COMM_WORLD);
+      _pot = eam::newInstance(EAM_STYLE_ALLOY, 0, MASTER_PROCESSOR, own_rank, MPI_COMM_WORLD);
         // MPIDomain::sim_processor.own_rank,
         // MPIDomain::sim_processor.comm);
     }

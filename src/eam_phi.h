@@ -5,9 +5,9 @@
 #ifndef CRYSTAL_MD_EAM_HPI_H
 #define CRYSTAL_MD_EAM_HPI_H
 
+#include "container/interpolation_lists.hpp"
+#include "container/interpolation_object.h"
 #include "data_structure/array_map.hpp"
-#include "interpolation_lists.hpp"
-#include "interpolation_object.h"
 #include "types.h"
 #include <vector>
 
@@ -41,6 +41,7 @@ typedef KeyDb _type_two_way_key;
 typedef InterpolationLists<_type_two_way_key, EamPhi> _type_two_way_map;
 
 /**
+ *  @deprecated
  *  pair potentials for N elements
  */
 class EamPhiList {

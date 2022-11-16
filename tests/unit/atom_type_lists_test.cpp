@@ -2,8 +2,8 @@
 // Created by genshen on 2018-12-22.
 //
 
+#include <container/atom_type_lists.h>
 #include <gtest/gtest.h>
-#include <atom_type_lists.h>
 
 // insert test
 TEST(test_atom_type_lists_add, atom_type_lists_test) {
