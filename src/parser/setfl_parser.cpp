@@ -28,15 +28,17 @@ void SetflParser::parseHeader() {
   copy = new char[strlen(tmp) + 1];
   strcpy(copy, tmp);
   char *ptr;
-  if ((ptr = strchr(copy, '#')))
+  if ((ptr = strchr(copy, '#'))) {
     *ptr = '\0';
+  }
   int n;
   if (strtok(copy, " \t\n\r\f") == nullptr) {
     n = 0;
   } else {
     n = 1;
-    while (strtok(nullptr, " \t\n\r\f"))
+    while (strtok(nullptr, " \t\n\r\f")) {
       n++;
+    }
   }
   int nwords = n;
   delete[] copy;
@@ -102,7 +104,7 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
     }
   }
 
-  //读取对势表
+  // 读取对势表
   int i, j;
   for (i = 0; i < file_ele_size; i++) {
     for (j = 0; j <= i; j++) {
