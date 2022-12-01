@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 
-SetflParser::SetflParser(const std::string filename) : Parser(filename) {}
+SetflParser::SetflParser(const std::string &filename) : EamBaseParse(filename) {}
 
 void SetflParser::parseHeader() {
   char tmp[4096];
@@ -28,15 +28,17 @@ void SetflParser::parseHeader() {
   copy = new char[strlen(tmp) + 1];
   strcpy(copy, tmp);
   char *ptr;
-  if ((ptr = strchr(copy, '#')))
+  if ((ptr = strchr(copy, '#'))) {
     *ptr = '\0';
+  }
   int n;
   if (strtok(copy, " \t\n\r\f") == nullptr) {
     n = 0;
   } else {
     n = 1;
-    while (strtok(nullptr, " \t\n\r\f"))
+    while (strtok(nullptr, " \t\n\r\f")) {
       n++;
+    }
   }
   int nwords = n;
   delete[] copy;
@@ -59,6 +61,16 @@ void SetflParser::parseHeader() {
 }
 
 void SetflParser::parseBody(eam *eam_instance) {
+  if (eam_instance->eam_style == EAM_STYLE_ALLOY) {
+    // parse eam potential file of style "eam/alloy"
+    parseBodyEamAlloy(dynamic_cast<EamAlloyLoader *>(eam_instance->eam_pot_loader));
+  } else if (eam_instance->eam_style == EAM_STYLE_FS) {
+    // parse eam potential file of style "eam/fs"
+    parseBodyEamFs(dynamic_cast<EamFsLoader *>(eam_instance->eam_pot_loader));
+  }
+}
+
+void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
   // 申请读取数据空间
   char tmp[4096];
   const int bufSize = std::max(nRho, nR);
@@ -82,26 +94,73 @@ void SetflParser::parseBody(eam *eam_instance) {
     // 读取嵌入能表
     grab(pot_file, nRho, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      eam_instance->embedded.append(key, nRho, x0, dRho, buf);
+      pot_loader->embedded.append(key, nRho, x0, dRho, buf);
     }
 
     // 读取电子云密度表
     grab(pot_file, nR, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      eam_instance->electron_density.append(key, nR, x0, dR, buf);
+      pot_loader->electron_density.append(key, nR, x0, dR, buf);
     }
   }
 
-  //读取对势表
+  // 读取对势表
   int i, j;
   for (i = 0; i < file_ele_size; i++) {
     for (j = 0; j <= i; j++) {
       grab(pot_file, nR, buf);
       if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
-        eam_instance->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
+        pot_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
       }
     }
   }
   delete[] buf;
   delete[] prop_key_list;
+}
+
+void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
+  char tmp[4096];
+  const int bufSize = std::max(nRho, nR);
+  double *buf = new double[bufSize];
+  double x0 = 0.0; // fixme start from 0 ??
+  atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
+
+  for (int i = 0; i < file_ele_size; i++) {
+    fgets(tmp, sizeof(tmp), pot_file);
+    atom_type::_type_atomic_no nAtomic;
+    double mass, lat;    // mass, lattice const
+    char latticeType[8]; // lattice type.
+    sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
+
+    atom_type::_type_prop_key key = AtomPropsList::makeId(i);
+    prop_key_list[i] = key;
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff); // todo ele name
+    }
+    // read embedded energy table
+    grab(pot_file, nRho, buf);
+    if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
+      pot_loader->embedded.push_back(nRho, x0, dRho, buf);
+    }
+    // read electron charge density
+    for (int j = 0; j < file_ele_size; j++) {
+      grab(pot_file, nR, buf);
+      atom_type::_type_prop_key key2 = j;
+      if (!isEleTypesFilterEnabled() || (isInFilterList(key) && isInFilterList(key))) {
+        pot_loader->electron_density.push_back(nR, x0, dR, buf);
+      }
+    }
+  }
+
+  // read pair potentials
+  int i, j;
+  for (i = 0; i < file_ele_size; i++) {
+    for (j = 0; j <= i; j++) {
+      grab(pot_file, nR, buf);
+      if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
+        pot_loader->eam_phi.push_back(nR, x0, dR, buf);
+      }
+    }
+  }
+  delete[] buf;
 }

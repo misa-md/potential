@@ -4,6 +4,7 @@
 #ifndef CRYSTAL_MD_INTERPOLATION_OBJECT_H
 #define CRYSTAL_MD_INTERPOLATION_OBJECT_H
 
+#include <algorithm>
 #include <mpi.h>
 
 struct SplineData {
@@ -43,10 +44,11 @@ public:
   void interpolateFile();
 
 public:
-  int n;        //!< 表中数据个数 todo: use unsigned int
-  double x0;    //!< 起始点
-  double invDx; //!< 倒数
-  double *values;
+  int n;          //!< 表中数据个数 todo: use unsigned int
+  double x0;      //!< 起始点
+  double invDx;   //!< 倒数
+  double max_val; // the max value in table.
+  double *values; // the origin values.
   double (*spline)[7];
 };
 

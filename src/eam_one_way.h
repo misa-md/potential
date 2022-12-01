@@ -5,9 +5,9 @@
 #ifndef CRYSTAL_MD_EAM_RHO_H
 #define CRYSTAL_MD_EAM_RHO_H
 
+#include "container/interpolation_lists.hpp"
+#include "container/interpolation_object.h"
 #include "data_structure/array_map.hpp"
-#include "interpolation_lists.hpp"
-#include "interpolation_object.h"
 #include "types.h"
 #include <vector>
 
@@ -17,6 +17,7 @@ typedef InterpolationLists<atom_type::_type_prop_key, OneWayEam> _type_one_way_m
 
 /**
  * electron charge density and embedded energy items for N elements.
+ * @deprecated
  */
 class OneWayEamList {
 public:
