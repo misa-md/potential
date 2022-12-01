@@ -60,6 +60,15 @@ public:
     }
   }
 
+  /**
+   * Calculate force of two atoms.
+   * @param key_from type of the center atom
+   * @param key_to type of the neighbor atom
+   * @param dist2 distance^2 of the two atoms.
+   * @param df_from df of the center atom
+   * @param df_to df of the neighbor atom
+   * @return the force of the two atoms.
+   */
   double toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to, const double dist2,
                  const double df_from, const double df_to);
 
@@ -78,7 +87,7 @@ public:
    * It is used in eam/fs potential style.
    * @param _atom_key1 atom type of atom i.
    * @param _atom_key2 atom type of atom j.
-   * @param dist2 distance of the two atoms.
+   * @param dist2 square of distance of the two atoms.
    * @return the contribution to electron charge density
    */
   double chargeDensity(const atom_type::_type_prop_key _atom_key1, const atom_type::_type_prop_key _atom_key2,
