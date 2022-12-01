@@ -35,6 +35,11 @@ public:
    */
   explicit eam(const atom_type::_type_atom_types n_ele, const int eam_style);
 
+  /**
+   * release memory, including spline data and the origin potential data.
+   */
+  ~eam();
+
   inline void eamBCast(const int root, const int rank, MPI_Comm comm) {
     if (eam_style == EAM_STYLE_ALLOY) {
       dynamic_cast<EamAlloyLoader *>(eam_pot_loader)->eamBCast(root, rank, comm);
