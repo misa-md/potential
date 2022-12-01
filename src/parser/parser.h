@@ -5,7 +5,7 @@
 #ifndef POT_PARSER_H
 #define POT_PARSER_H
 
-#include "atom_type_lists.h"
+#include "container/atom_type_lists.h"
 #include "eam.h"
 #include "types.h"
 #include <string>
@@ -56,8 +56,6 @@ protected:
   atom_type::_type_atom_types filter_ele_size;
   std::vector<atom_type::_type_prop_key> filter_ele_types;
   FILE *pot_file;
-
-  void grab(FILE *fptr, int n, double *list);
 
   /**
    * check whether an element type is in the filtering list.
