@@ -6,6 +6,7 @@
 #define POT_EAM_BASE_PARSER_HPP
 
 #include <stdlib.h>
+#include <cstring>
 
 #include "parser.h"
 
