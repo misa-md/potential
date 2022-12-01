@@ -20,6 +20,13 @@ void EamBaseLoader<TYPE_ELE, TYPE_EMBED, TYPE_PHI>::eamBCast(const int root, con
 }
 
 template <typename TYPE_ELE, typename TYPE_EMBED, typename TYPE_PHI>
+void EamBaseLoader<TYPE_ELE, TYPE_EMBED, TYPE_PHI>::destroy() {
+  electron_density.remove_all_splines();
+  embedded.remove_all_splines();
+  eam_phi.remove_all_splines();
+}
+
+template <typename TYPE_ELE, typename TYPE_EMBED, typename TYPE_PHI>
 EamBaseLoader<TYPE_ELE, TYPE_EMBED, TYPE_PHI>::EamBaseLoader(const atom_type::_type_atom_types n_ele)
     : eam_phi(n_ele), electron_density(n_ele), embedded(n_ele), _n_eles(n_ele) {}
 
