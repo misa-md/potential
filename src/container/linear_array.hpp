@@ -66,6 +66,15 @@ public:
     }
   }
 
+  /**
+   * remove_all_splines remove all interpolation and all origin/spline data in the interpolation.
+   */
+  void remove_all_splines() {
+    for (InterpolationObject *interpolation : data) {
+      delete interpolation;
+    }
+  }
+
   void sync(const int root, const int rank, MPI_Comm comm) {
     // the size of data elements may be different on each process, make them the same.
     MPI_Bcast(&len, 1, MPI_Type_EleSize, root, comm);

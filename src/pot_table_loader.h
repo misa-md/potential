@@ -37,6 +37,11 @@ public:
    */
   void interpolateFile();
 
+  /**
+   * remove all potentials data (e.g. spline interpolation and the origin potential table)
+   */
+  void destroy();
+
 public:
   TYPE_PHI eam_phi;          // pair potentials for N types elements.
   TYPE_ELE electron_density; // electron charge density
