@@ -12,7 +12,7 @@ set(TEST_SOURCE_FILES
         main.cpp
         container/linear_array_test.cpp
         data_structure/array_map_test.cpp
-        atom_type_lists_test.cpp
+        container/atom_type_lists_test.cpp
         interpolation_lists_sync_test.cpp
         )
 
