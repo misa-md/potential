@@ -26,6 +26,18 @@ eam::eam(const atom_type::_type_atom_types n_ele, const int eam_style) : _n_eles
   }
 }
 
+eam::~eam() {
+  if (eam_style == EAM_STYLE_ALLOY) {
+    dynamic_cast<EamAlloyLoader *>(eam_pot_loader)->destroy();
+    delete dynamic_cast<EamAlloyLoader *>(eam_pot_loader);
+  } else if (eam_style == EAM_STYLE_FS) {
+    dynamic_cast<EamFsLoader *>(eam_pot_loader)->destroy();
+    delete dynamic_cast<EamFsLoader *>(eam_pot_loader);
+  } else {
+    printf("The eam style `%d` is not implemented\n", eam_style);
+  }
+}
+
 void eam::setlatticeType(char *_latticeType) { strcpy(latticeType, _latticeType); }
 
 double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,

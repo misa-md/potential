@@ -72,6 +72,7 @@ int main(int argc, char **argv) {
     const double df_b = 0.15;
     std::cout << sqrt(dist2 / lattice_const / lattice_const) << "\t" << _pot->toForce(0, 0, dist2, df_a, df_b)
               << std::endl;
+    delete _pot;
     // Finalize the MPI environment.
     MPI_Finalize();
     return 0;
