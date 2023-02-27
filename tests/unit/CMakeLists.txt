@@ -6,10 +6,12 @@ configure_file(
 
 set(TEST_HEADER_FILES
         test_config.h
+        eam_pot_fixture.hpp
         )
 
 set(TEST_SOURCE_FILES
         main.cpp
+        potential_loader_test.cpp
         container/linear_array_test.cpp
         data_structure/array_map_test.cpp
         container/atom_type_lists_test.cpp
