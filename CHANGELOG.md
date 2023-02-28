@@ -3,9 +3,11 @@
 
 
 <a name="v0.3.0"></a>
-## [v0.3.0] - 2022-12-01
+## [v0.3.0] - 2023-02-28
 ### Chore
+- **changelog:** add CHANGELOG
 - **eam:** add comment for `eam::toForce` and correct comment of `eam::chargeDensity`
+- **pot-loader:** add comments for member functions in classs `EamPotTableLoaderApi`
 
 ### Docs
 - **readme:** correct cmake option in building section of README.md
@@ -23,12 +25,14 @@
 - **pot-table:** fix index out of range in calculation caused by the incorrect size in table bcast
 
 ### Merge
+- Merge pull request [#5](https://github.com/MISA-MD/potential/issues/5) from misa-md/dev
 - Merge pull request [#3](https://github.com/MISA-MD/potential/issues/3) from misa-md/dev
 - Merge branch 'improve-code-comments-and-style' into dev
 - Merge branch 'fix-building-error-missing-header' into 'dev'
 - Merge pull request [#2](https://github.com/MISA-MD/potential/issues/2) from misa-md/feature-release-potential-table-memory
 - Merge pull request [#1](https://github.com/MISA-MD/potential/issues/1) from misa-md/feature-eam-fs-support
 - **eam:** Merge branch 'fix-embed-energy-exceed-table' into dev
+- **pot-loader:** Merge pull request [#4](https://github.com/MISA-MD/potential/issues/4) from misa-md/tests-potential-loader
 
 ### Refactor
 - **atom-type:** move test file `atom_type_lists_test.cpp` to directory `tests/unit/container`
@@ -36,6 +40,9 @@
 
 ### Style
 - **parser:** improve code style of file `setfl_parser.cpp`
+
+### Test
+- **pot-loader:** add unit tests for potential table loader for both eam/alloy and eam/fs potential
 
 ### BREAKING CHANGE
 
