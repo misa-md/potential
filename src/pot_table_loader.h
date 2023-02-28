@@ -53,13 +53,40 @@ protected:
 
 class EamPotTableLoaderApi {
 public:
+  /**
+   * Load potential table of electron density for eam/alloy type.
+   * @param _atom_key the type of neighbor atom.
+   * @return the potential table rho{atom_key}.
+   */
   virtual InterpolationObject *loadElectronDensity(const atom_type::_type_prop_key _atom_key) = 0;
 
+  /**
+   * Load potential table of electron density for eam/fs type.
+   * load rho{key_from, key_to}.
+   * @param key_from the type of the current or center atom.
+   * @param key_to the type of the neighbor atom.
+   * @return the potential table rho{key_from, key_to}.
+   */
   virtual InterpolationObject *loadElectronDensity(const atom_type::_type_prop_key key_from,
                                                    const atom_type::_type_prop_key key_to) = 0;
 
+  /**
+   * Load embedded potential table for both eam/alloy and eam/fs type.
+   * @param _atom_key atom type.
+   * @return the embedded potential table.
+   */
   virtual InterpolationObject *loadEmbedded(const atom_type::_type_prop_key _atom_key) = 0;
 
+  /**
+   * Load potential table of pair potential for both eam/alloy and eam/fs type.
+   * Load the pair potential table phi_{key_from, key_to} or phi_{key_to, key_from}.
+   * Note: phi_{key_from, key_to} is the same as phi_{key_to, key_from}, thus, user can
+   * call loadEamPhi(key_from, key_to) or loadEamPhi(key_to, key_from).
+   *
+   * @param key_from center atom type, or neighbor atom type.
+   * @param key_to neighbor atom type, or center atom type.
+   * @return the pair potential table.
+   */
   virtual InterpolationObject *loadEamPhi(const atom_type::_type_prop_key key_from,
                                           const atom_type::_type_prop_key key_to) = 0;
 };
