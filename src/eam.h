@@ -112,6 +112,8 @@ public:
    */
   double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho);
 
+  double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho);
+
   /**
    * pair potential energy.
    * @return pair potential energy.
@@ -143,6 +145,8 @@ private:
       return nullptr;
     }
   }
+
+  static double embedEnergyImp(const InterpolationObject *embed, const double rho, const double max_rho);
 
 public:
   /**

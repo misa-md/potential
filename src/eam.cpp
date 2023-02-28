@@ -94,8 +94,17 @@ double eam::dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double
   return (s.spline[0] * s.p + s.spline[1]) * s.p + s.spline[2];
 }
 
+double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
+  const InterpolationObject *embed = eam_pot_loader->loadEmbedded(_atom_key);
+  return embedEnergyImp(embed, rho, embed->max_val);
+}
+
 double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho) {
   const InterpolationObject *embed = eam_pot_loader->loadEmbedded(_atom_key);
+  return embedEnergyImp(embed, rho, max_rho);
+}
+
+double eam::embedEnergyImp(const InterpolationObject *embed, const double rho, const double max_rho) {
   const SplineData s = embed->findSpline(rho);
   double phi = ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
   if (rho > max_rho) {
