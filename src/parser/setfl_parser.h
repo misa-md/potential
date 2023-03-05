@@ -9,6 +9,11 @@
 #include "eam_base_parser.hpp"
 #include "parser.h"
 
+struct EamPotFileHeader {
+  int nRho, nR;            // at line 5 in potential file header.
+  double dRho, dR, cutoff; // at line 5 in potential file header
+};
+
 // parser for parsing potential file of "setdl" format.
 class SetflParser : public EamBaseParse {
 public:
@@ -18,6 +23,8 @@ public:
 
   void parseBody(eam *eam_instance) override;
 
+  inline EamPotFileHeader getHeader() const { return header; }
+
 protected:
   // parse eam file of "eam/alloy" style.
   void parseBodyEamAlloy(EamAlloyLoader *pot_loader);
@@ -26,8 +33,7 @@ protected:
   void parseBodyEamFs(EamFsLoader *pot_loader);
 
 private:
-  int nRho, nR;            // at line 5 in header.
-  double dRho, dR, cutoff; // at line 5 in header
+  EamPotFileHeader header;
 };
 
 #endif // POT_SETFL_PARSER_H

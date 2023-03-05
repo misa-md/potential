@@ -54,10 +54,10 @@ void SetflParser::parseHeader() {
     continue;
   }
   delete[] words;
-  // 第五行
+  // line 5 in file
   // 所有原子使用同一个截断半径
   fgets(tmp, sizeof(tmp), pot_file);
-  sscanf(tmp, "%d %le %d %le %le", &nRho, &dRho, &nR, &dR, &cutoff);
+  sscanf(tmp, "%d %le %d %le %le", &header.nRho, &header.dRho, &header.nR, &header.dR, &header.cutoff);
 }
 
 void SetflParser::parseBody(eam *eam_instance) {
@@ -73,7 +73,7 @@ void SetflParser::parseBody(eam *eam_instance) {
 void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
   // 申请读取数据空间
   char tmp[4096];
-  const int bufSize = std::max(nRho, nR);
+  const int bufSize = std::max(header.nRho, header.nR);
   double *buf = new double[bufSize];
   double x0 = 0.0; // fixme start from 0 ??
   atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
@@ -88,19 +88,19 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
     atom_type::_type_prop_key key = AtomPropsList::makeId(i);
     prop_key_list[i] = key;
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff); // todo ele name
+      type_lists.addAtomProp(nAtomic, "", mass, lat, header.cutoff); // todo ele name
     }
 
     // 读取嵌入能表
-    grab(pot_file, nRho, buf);
+    grab(pot_file, header.nRho, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      pot_loader->embedded.append(key, nRho, x0, dRho, buf);
+      pot_loader->embedded.append(key, header.nRho, x0, header.dRho, buf);
     }
 
     // 读取电子云密度表
-    grab(pot_file, nR, buf);
+    grab(pot_file, header.nR, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      pot_loader->electron_density.append(key, nR, x0, dR, buf);
+      pot_loader->electron_density.append(key, header.nR, x0, header.dR, buf);
     }
   }
 
@@ -108,9 +108,9 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
   int i, j;
   for (i = 0; i < file_ele_size; i++) {
     for (j = 0; j <= i; j++) {
-      grab(pot_file, nR, buf);
+      grab(pot_file, header.nR, buf);
       if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
-        pot_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], nR, x0, dR, buf);
+        pot_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], header.nR, x0, header.dR, buf);
       }
     }
   }
@@ -120,7 +120,7 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
 
 void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
   char tmp[4096];
-  const int bufSize = std::max(nRho, nR);
+  const int bufSize = std::max(header.nRho, header.nR);
   double *buf = new double[bufSize];
   double x0 = 0.0; // fixme start from 0 ??
   atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
@@ -135,19 +135,19 @@ void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
     atom_type::_type_prop_key key = AtomPropsList::makeId(i);
     prop_key_list[i] = key;
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff); // todo ele name
+      type_lists.addAtomProp(nAtomic, "", mass, lat, header.cutoff); // todo ele name
     }
     // read embedded energy table
-    grab(pot_file, nRho, buf);
+    grab(pot_file, header.nRho, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
-      pot_loader->embedded.push_back(nRho, x0, dRho, buf);
+      pot_loader->embedded.push_back(header.nRho, x0, header.dRho, buf);
     }
     // read electron charge density
     for (int j = 0; j < file_ele_size; j++) {
-      grab(pot_file, nR, buf);
+      grab(pot_file, header.nR, buf);
       atom_type::_type_prop_key key2 = j;
       if (!isEleTypesFilterEnabled() || (isInFilterList(key) && isInFilterList(key))) {
-        pot_loader->electron_density.push_back(nR, x0, dR, buf);
+        pot_loader->electron_density.push_back(header.nR, x0, header.dR, buf);
       }
     }
   }
@@ -156,9 +156,9 @@ void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
   int i, j;
   for (i = 0; i < file_ele_size; i++) {
     for (j = 0; j <= i; j++) {
-      grab(pot_file, nR, buf);
+      grab(pot_file, header.nR, buf);
       if (!isEleTypesFilterEnabled() || (isInFilterList(prop_key_list[i]) && isInFilterList(prop_key_list[j]))) {
-        pot_loader->eam_phi.push_back(nR, x0, dR, buf);
+        pot_loader->eam_phi.push_back(header.nR, x0, header.dR, buf);
       }
     }
   }
