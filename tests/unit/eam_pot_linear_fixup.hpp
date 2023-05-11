@@ -53,7 +53,7 @@ public:
     for (i = 0; i < ELE_SIZE; i++) {
       double data_buff[5000] = {};
       for (int k = 0; k < 5000; k++) {
-        data_buff[k] = gen_phi(i, k);
+        data_buff[k] = gen_phi(i, 0, k);
       }
       for (j = 0; j <= i; j++) {
         const double x0 = i * ELE_SIZE + j;
@@ -68,9 +68,12 @@ public:
 
   static inline double gen_electron_density(int k) { return (k * DELTA * 3.0); }
   static inline double gen_embed(int k) { return (-k * DELTA * 10.0); }
-  static inline double gen_phi(int key1, int k) { return (key1 + k * DELTA * 10.0); }
+  static inline double gen_phi(int key1, int key2, int k) { return (key1 + k * DELTA * 10.0); }
 
   inline double max_rho_for_embedded(int key) { return -key + 0.001 * DATA_SIZE; }
+  inline double max_x_for_elec_density(int key) { return key + 0.001 * DATA_SIZE; }
+  inline double max_x_for_pair_phi(int key1, int key2) { return key1 * ELE_SIZE + key2 + 0.001 * DATA_SIZE; }
+
   /**
    * the expected value for electron_density at a given distance and key.
    */
@@ -92,9 +95,10 @@ public:
     if (key1 < key2) {
       std::swap(key1, key2);
     }
-    int index = key1 * ELE_SIZE + key2;
+    int index = key1 * (key1 + 1) / 2 + key2;
     const double x0 = x0_eam_phi[index];
-    return (key1 + (r - x0) / 0.001) * DELTA * 10.0; // keep the same as expected_phi
+    const double e = (key1 + (r - x0) / 0.001) * DELTA * 10.0; // keep the same as expected_phi
+    return e / r;
   }
 
   void TearDown() override {
