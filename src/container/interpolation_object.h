@@ -31,9 +31,18 @@ public:
 
   /**
    * given a real value on x axis, find the corresponding spline and value p.
+   * @tparam X0_IS_ZERO true for the x0 is zero (data at x-axis is starting from zero).
+   * the @tparam X0_IS_ZERO can be considered as a special case.
+   * For example, in eam/fs, the embedding energies F(rho) always start from rho = 0.
+   * While for eam/he, it may not start from 0.
    */
-  inline SplineData findSpline(const double value) const {
-    double p = value * invDx + 1.0;
+  template <bool X0_IS_ZERO = false> inline SplineData findSpline(const double value) const {
+    double p = 0.0;
+    if (X0_IS_ZERO) {
+      p = value * invDx + 1.0;
+    } else {
+      p = (value - x0) * invDx + 1.0;
+    }
     int m = static_cast<int>(p);
     m = std::max(1, std::min(m, (n - 1)));
     p -= m;
