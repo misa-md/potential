@@ -7,6 +7,7 @@ configure_file(
 set(TEST_HEADER_FILES
         test_config.h
         eam_pot_fixture.hpp
+        eam_pot_linear_fixup.hpp
         )
 
 set(TEST_SOURCE_FILES
