@@ -7,6 +7,7 @@ configure_file(
 set(TEST_HEADER_FILES
         test_config.h
         eam_pot_fixture.hpp
+        eam_pot_linear_fixup.hpp
         )
 
 set(TEST_SOURCE_FILES
@@ -15,6 +16,7 @@ set(TEST_SOURCE_FILES
         container/linear_array_test.cpp
         data_structure/array_map_test.cpp
         container/atom_type_lists_test.cpp
+        eam_alloy_pot_api_test.cpp
         interpolation_lists_sync_test.cpp
         )
 
