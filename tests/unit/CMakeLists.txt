@@ -18,6 +18,7 @@ set(TEST_SOURCE_FILES
         container/atom_type_lists_test.cpp
         eam_alloy_pot_api_test.cpp
         interpolation_lists_sync_test.cpp
+        eam_fs_pot_api_test.cpp
         )
 
 # set binary path and lib storage path wile compiling process.
