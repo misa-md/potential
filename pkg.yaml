@@ -9,5 +9,5 @@ target: pot
 
 dependencies:
   packages:
-    github.com/google/googletest: {version: release-1.10.0, target: GTest}
+    github.com/google/googletest: {version: release-1.12.1, target: GTest}
     github.com/google/benchmark: {version: v1.8.2, target: benchmark, features: ["BENCHMARK_ENABLE_TESTING=OFF"]}
