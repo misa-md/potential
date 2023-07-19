@@ -57,8 +57,7 @@ public:
    * @param ele_key
    * @return
    */
-  inline InterpolationObject *getEamItemByType(atom_type::_type_prop_key ele_key) { return data[ele_key];
-  }
+  inline InterpolationObject *getEamItemByType(atom_type::_type_prop_key ele_key) { return data[ele_key]; }
 
   void interpolateAll() {
     for (array_map::type_map_index i = 0; i < len; i++) {

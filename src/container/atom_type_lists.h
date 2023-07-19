@@ -79,7 +79,7 @@ public:
    */
   static inline atom_type::_type_prop_key makeId(atom_type::_type_atomic_no no) {
     // note id can not be: KeyPropNotFound or KeyPropExists.
-    return no; // todo we dont consider the same atomic no, but for different id.
+    return no; // todo we don't consider the same atomic no, but for different id.
   }
 
 private:
