@@ -10,7 +10,7 @@
 Parser::Parser(const std::string filename)
     : file_ele_size(0), filter_ele_size(0), filter_ele_types(), pot_filename(filename) {
   char tmp[4096];
-  sprintf(tmp, "%s", pot_filename.c_str());
+  snprintf(tmp, pot_filename.size() + 1, "%s", pot_filename.c_str());
 
   pot_file = fopen(tmp, "r");
   if (pot_file == nullptr) {

@@ -47,7 +47,8 @@ public:
     m = std::max(1, std::min(m, (n - 1)));
     p -= m;
     p = std::min(p, 1.0);
-    return SplineData{spline[m], p};
+    SplineData result = {.spline = spline[m], .p = p};
+    return result;
   }
 
   void interpolateFile();

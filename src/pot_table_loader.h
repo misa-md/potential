@@ -91,7 +91,8 @@ public:
                                           const atom_type::_type_prop_key key_to) = 0;
 };
 
-class EamAlloyLoader : public EamBaseLoader<LinearArray, LinearArray, PairLinearArray>, public EamPotTableLoaderApi {
+class EamAlloyLoader final : public EamBaseLoader<LinearArray, LinearArray, PairLinearArray>,
+                             public EamPotTableLoaderApi {
 public:
   explicit EamAlloyLoader(const atom_type::_type_atom_types n_ele);
 
@@ -117,8 +118,8 @@ public:
   std::vector<size_t> dataTableSizes(const std::vector<atom_type::_type_prop_key> &elements) override;
 };
 
-class EamFsLoader : public EamBaseLoader<FullConnLinearArray, LinearArray, PairLinearArray>,
-                    public EamPotTableLoaderApi {
+class EamFsLoader final : public EamBaseLoader<FullConnLinearArray, LinearArray, PairLinearArray>,
+                          public EamPotTableLoaderApi {
 
 public:
   explicit EamFsLoader(const atom_type::_type_atom_types n_ele);
