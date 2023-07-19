@@ -8,22 +8,22 @@
 FuncflParser::FuncflParser(const std::string filename) : Parser(filename) {}
 
 void FuncflParser::parseHeader() {
-  // 第一行
+  // the 1st line of the file
   char tmp[4096];
   fgets(tmp, sizeof(tmp), pot_file);
   char name[3];
   sscanf(tmp, "%s", name);
 
-  // 第二行
+  // the 2nd line of the file
   atom_type::_type_atomic_no nAtomic;
   double mass, lat;
   char latticeType[8];
   fgets(tmp, sizeof(tmp), pot_file);
   sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
 
-  // todo eam_instance->setlatticeType(latticeType); //晶格类型
+  // todo eam_instance->setlatticeType(latticeType); // lattice type
 
-  // 第三行
+  // the 3rd line of the file
   int nRho, nR;
   double dRho, dR, cutoff;
   fgets(tmp, sizeof(tmp), pot_file);
@@ -33,17 +33,16 @@ void FuncflParser::parseHeader() {
 
 void FuncflParser::parseBody(eam *eam_instance) {
   double x0 = 0.0;
-  // 申请读取数据的空间
   int bufSize = std::max(nRho, nR);
   double *buf = new double[bufSize];
 
-  // 读取嵌入能表
+  // read embedded energy table
   for (int ii = 0; ii < nRho; ++ii) {
     fscanf(pot_file, "%lg", buf + ii);
   }
   //   fixme eam_instance->initf(0, nRho, x0, dRho, buf); //通过读取势文件的数据建立table
 
-  // 读取对势表
+  // read pair potnetial table
   for (int ii = 0; ii < nR; ++ii) {
     fscanf(pot_file, "%lg", buf + ii);
   }
@@ -56,7 +55,7 @@ void FuncflParser::parseBody(eam *eam_instance) {
   buf[0] = buf[1] + (buf[1] - buf[2]);
   // fixme  eam_instance->initphi(0, nR, x0, dR, buf);
 
-  // 读取电子云密度表
+  // read electron density table
   for (int ii = 0; ii < nR; ++ii) {
     fscanf(pot_file, "%lg", buf + ii);
   }
