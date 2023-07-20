@@ -5,12 +5,12 @@
 #include "funcfl_parser.h"
 #include <utils.h>
 
-FuncflParser::FuncflParser(const std::string filename) : Parser(filename) {}
+FuncflParser::FuncflParser(std::istream &pot_file) : Parser(pot_file) {}
 
 void FuncflParser::parseHeader() {
   // the 1st line of the file
   char tmp[4096];
-  fgets(tmp, sizeof(tmp), pot_file);
+  pot_file.getline(tmp, sizeof(tmp));
   char name[3];
   sscanf(tmp, "%s", name);
 
@@ -18,15 +18,13 @@ void FuncflParser::parseHeader() {
   atom_type::_type_atomic_no nAtomic;
   double mass, lat;
   char latticeType[8];
-  fgets(tmp, sizeof(tmp), pot_file);
+  pot_file.getline(tmp, sizeof(tmp));
   sscanf(tmp, "%hu %le %le %s", &nAtomic, &mass, &lat, latticeType);
 
   // todo eam_instance->setlatticeType(latticeType); // lattice type
 
   // the 3rd line of the file
-  int nRho, nR;
-  double dRho, dR, cutoff;
-  fgets(tmp, sizeof(tmp), pot_file);
+  pot_file.getline(tmp, sizeof(tmp));
   sscanf(tmp, "%d %le %d %le %le", &nRho, &dRho, &nR, &dR, &cutoff);
   type_lists.addAtomProp(nAtomic, "", mass, lat, cutoff);
 }
@@ -38,13 +36,13 @@ void FuncflParser::parseBody(eam *eam_instance) {
 
   // read embedded energy table
   for (int ii = 0; ii < nRho; ++ii) {
-    fscanf(pot_file, "%lg", buf + ii);
+    pot_file >> buf[ii];
   }
   //   fixme eam_instance->initf(0, nRho, x0, dRho, buf); //通过读取势文件的数据建立table
 
   // read pair potnetial table
   for (int ii = 0; ii < nR; ++ii) {
-    fscanf(pot_file, "%lg", buf + ii);
+    pot_file >> buf[ii];
   }
   double r;
   for (int ii = 1; ii < nR; ++ii) {
@@ -57,7 +55,7 @@ void FuncflParser::parseBody(eam *eam_instance) {
 
   // read electron density table
   for (int ii = 0; ii < nR; ++ii) {
-    fscanf(pot_file, "%lg", buf + ii);
+    pot_file >> buf[ii];
   }
   //  fixme  eam_instance->initrho(0, nR, x0, dR, buf);
 

@@ -8,6 +8,8 @@
 #include "container/atom_type_lists.h"
 #include "eam.h"
 #include "types.h"
+
+#include <iostream>
 #include <string>
 
 /**
@@ -18,7 +20,7 @@ public:
   // all types are saved in this object while parsing.
   AtomPropsList type_lists;
 
-  explicit Parser(const std::string filename);
+  explicit Parser(std::istream &pot_file);
 
   /**
    * When parsing potential file, we only consider the element types in @param ele_types.
@@ -44,7 +46,7 @@ public:
    */
   virtual void parseBody(eam *eam_instance) = 0;
 
-  virtual void done();
+  //  virtual void done();
 
   // get the real elements count.
   atom_type::_type_atom_types getEles() const;
@@ -55,7 +57,8 @@ protected:
   // the size/count of element after filtering.
   atom_type::_type_atom_types filter_ele_size;
   std::vector<atom_type::_type_prop_key> filter_ele_types;
-  FILE *pot_file;
+
+  std::istream &pot_file;
 
   /**
    * check whether an element type is in the filtering list.

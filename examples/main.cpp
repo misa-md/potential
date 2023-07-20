@@ -2,8 +2,9 @@
 // Created by genshen on 2019-03-24.
 //
 
-#include <iostream>
 #include <cstring>
+#include <fstream>
+#include <iostream>
 #include <mpi.h>
 
 #include <eam.h>
@@ -30,18 +31,17 @@ int main(int argc, char **argv) {
     // 读取势函数文件
     //atom_type::_type_atom_types eles = 0;
     if (own_rank == MASTER_PROCESSOR) {
-        char tmp[4096];
-        snprintf(tmp, filepath.length() + 1, "%s", filepath.c_str());
-
-        FILE *pot_file = fopen(tmp, "r");
-        if (pot_file == nullptr) { // todo open too many in md.
-            // kiwi::logs::e("pot", "open potential file {} failed.\n", filepath);
-            std::cerr << "open potential file" << filepath << "failed" << std::endl;
-            MPI_Abort(MPI_COMM_WORLD, 1);
-            return 0;
+        std::ifstream pot_file;
+        pot_file.open(filepath, std::ios::in);
+        if (!pot_file.is_open()) {
+          // kiwi::logs::e("pot", "open potential file {} failed.\n", filepath);
+          std::cerr << "open potential file" << filepath << "failed" << std::endl;
+          MPI_Abort(MPI_COMM_WORLD, 1);
+          return 0;
         }
+
         // new parser
-        SetflParser *parser = new SetflParser(filepath); // todo delete (vector)
+        SetflParser *parser = new SetflParser(pot_file); // todo delete (vector)
         parser->parseHeader(); // elements count got. // todo parsing error.
         // eles = parser->getEles(); // elements values on non-root processors are 0.
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
         // MPIDomain::sim_processor.comm);
         // read data
         parser->parseBody(_pot); // todo parsing error.
-        parser->done();
+//        parser->done();
     } else {
       _pot = eam::newInstance(EAM_STYLE_ALLOY, 0, MASTER_PROCESSOR, own_rank, MPI_COMM_WORLD);
         // MPIDomain::sim_processor.own_rank,

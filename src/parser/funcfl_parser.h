@@ -8,17 +8,20 @@
 
 #include "parser.h"
 
+/**
+ * @deprecated FuncflParser is not maintained any more.
+ */
 class FuncflParser : public Parser {
 public:
-  explicit FuncflParser(const std::string filename);
+  explicit FuncflParser(std::istream &pot_file);
 
   void parseHeader() override;
 
   void parseBody(eam *eam_instance) override;
 
 private:
-  int nRho, nR;                     // at line 3 in header.
-  double /*dRho, */ dR /*,cutoff*/; // at line 3 in header
+  int nRho, nR;            // at line 3 in header.
+  double dRho, dR, cutoff; // at line 3 in header
 };
 
 #endif // POT_FUNL_PARSER_H
