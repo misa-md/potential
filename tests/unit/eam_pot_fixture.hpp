@@ -17,6 +17,7 @@ public:
   constexpr static unsigned int ELE_SIZE = 3;
   constexpr static unsigned int DATA_SIZE = 5000;
   constexpr static unsigned int RAND_SEED = 27321;
+  constexpr static double DELTA = 0.001;
 
   void SetUp() override {
     const unsigned int root_rank = 0;
@@ -43,8 +44,8 @@ public:
       prop_key_list[i] = key;
       x0_electron_density.push_back(key);
       x0_embedded.push_back(-key);
-      eam_alloy_loader->embedded.append(key, DATA_SIZE, -key, 0.001, data_buff_emb);
-      eam_alloy_loader->electron_density.append(key, DATA_SIZE, key, 0.001, data_buff_elec);
+      eam_alloy_loader->embedded.append(key, DATA_SIZE, -key, DELTA, data_buff_emb);
+      eam_alloy_loader->electron_density.append(key, DATA_SIZE, key, DELTA, data_buff_elec);
     }
 
     int i, j;
@@ -56,7 +57,7 @@ public:
       for (j = 0; j <= i; j++) {
         const double x0 = i * ELE_SIZE + j;
         x0_eam_phi.push_back(x0);
-        eam_alloy_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], DATA_SIZE, x0, 0.001, data_buff);
+        eam_alloy_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], DATA_SIZE, x0, DELTA, data_buff);
       }
     }
 
