@@ -11,6 +11,9 @@
 #include "interpolation_object.h"
 #include "types.h"
 
+/**
+ * @deprecated ArrayMap template and InterpolationLists are deprecated now.
+ */
 template <typename K, typename IN> class InterpolationLists : public ArrayMap<K, IN> {
   static_assert(std::is_base_of<InterpolationObject, IN>::value, "typename IN must derive from InterpolationObject");
 

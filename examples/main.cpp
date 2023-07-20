@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     //atom_type::_type_atom_types eles = 0;
     if (own_rank == MASTER_PROCESSOR) {
         char tmp[4096];
-        sprintf(tmp, "%s", filepath.c_str());
+        snprintf(tmp, filepath.length() + 1, "%s", filepath.c_str());
 
         FILE *pot_file = fopen(tmp, "r");
         if (pot_file == nullptr) { // todo open too many in md.

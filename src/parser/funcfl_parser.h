@@ -17,8 +17,8 @@ public:
   void parseBody(eam *eam_instance) override;
 
 private:
-  int nRho, nR;            // at line 3 in header.
-  double dRho, dR, cutoff; // at line 3 in header
+  int nRho, nR;                     // at line 3 in header.
+  double /*dRho, */ dR /*,cutoff*/; // at line 3 in header
 };
 
 #endif // POT_FUNL_PARSER_H

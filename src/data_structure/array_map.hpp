@@ -11,6 +11,8 @@
 #include <vector>
 
 /**
+ * @deprecated ArrayMap is deprecated now. Please use LinearArray instead.
+ *
  * Map implementation also can be indexed as array index.
  * The size is usually less then 500.
  */

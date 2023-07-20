@@ -73,7 +73,7 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
   return fpair;
 }
 
-double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) {
+double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) const {
   const InterpolationObject *electron_spline = eam_pot_loader->loadElectronDensity(_atom_key);
   const double r = sqrt(dist2);
   const SplineData s = electron_spline->findSpline(r);
@@ -81,25 +81,25 @@ double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const doubl
 }
 
 double eam::chargeDensity(const atom_type::_type_prop_key _atom_key_me, const atom_type::_type_prop_key _atom_key_nei,
-                          const double dist2) {
+                          const double dist2) const {
   const InterpolationObject *electron_spline = eam_pot_loader->loadElectronDensity(_atom_key_me, _atom_key_nei);
   const double r = sqrt(dist2);
   const SplineData s = electron_spline->findSpline(r);
   return ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
 }
 
-double eam::dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
+double eam::dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) const {
   const InterpolationObject *embed = eam_pot_loader->loadEmbedded(_atom_key);
   const SplineData s = embed->findSpline(rho);
   return (s.spline[0] * s.p + s.spline[1]) * s.p + s.spline[2];
 }
 
-double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) {
+double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) const {
   const InterpolationObject *embed = eam_pot_loader->loadEmbedded(_atom_key);
   return embedEnergyImp(embed, rho, embed->max_val);
 }
 
-double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho) {
+double eam::embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho) const {
   const InterpolationObject *embed = eam_pot_loader->loadEmbedded(_atom_key);
   return embedEnergyImp(embed, rho, max_rho);
 }
@@ -116,7 +116,7 @@ double eam::embedEnergyImp(const InterpolationObject *embed, const double rho, c
 }
 
 double eam::pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
-                          const double dist2) {
+                          const double dist2) const {
   const InterpolationObject *phi_spline = eam_pot_loader->loadEamPhi(key_from, key_to);
   const double r = sqrt(dist2);
 

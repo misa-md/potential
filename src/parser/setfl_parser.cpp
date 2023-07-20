@@ -12,17 +12,15 @@ SetflParser::SetflParser(const std::string &filename) : EamBaseParse(filename) {
 
 void SetflParser::parseHeader() {
   char tmp[4096];
-  // 前三行为注释
+  // file comments in the first 3 lines of the file.
   fgets(tmp, sizeof(tmp), pot_file);
   fgets(tmp, sizeof(tmp), pot_file);
   fgets(tmp, sizeof(tmp), pot_file);
 
   // line 4 in file
   fgets(tmp, sizeof(tmp), pot_file);
-  sscanf(tmp, "%hu", &file_ele_size); // 原子类型个数
+  sscanf(tmp, "%hu", &file_ele_size); // number of atom types
 
-  //    eam_instance->initElementN(nElemTypes);// 从文件中读入原子类型个数后, 对势函数进行初始化.
-  // todo delete.
 
   char *copy;
   copy = new char[strlen(tmp) + 1];
@@ -55,7 +53,7 @@ void SetflParser::parseHeader() {
   }
   delete[] words;
   // line 5 in file
-  // 所有原子使用同一个截断半径
+  // all types of atom use the same cutoff.
   fgets(tmp, sizeof(tmp), pot_file);
   sscanf(tmp, "%d %le %d %le %le", &header.nRho, &header.dRho, &header.nR, &header.dR, &header.cutoff);
 }
@@ -71,13 +69,14 @@ void SetflParser::parseBody(eam *eam_instance) {
 }
 
 void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
-  // 申请读取数据空间
+
   char tmp[4096];
   const int bufSize = std::max(header.nRho, header.nR);
   double *buf = new double[bufSize];
   double x0 = 0.0; // fixme start from 0 ??
   atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
-  // 每种原子信息
+
+  // for each type of atom
   for (int i = 0; i < file_ele_size; i++) {
     fgets(tmp, sizeof(tmp), pot_file);
     atom_type::_type_atomic_no nAtomic;
@@ -91,20 +90,20 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
       type_lists.addAtomProp(nAtomic, "", mass, lat, header.cutoff); // todo ele name
     }
 
-    // 读取嵌入能表
+    // read embedded energy table
     grab(pot_file, header.nRho, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
       pot_loader->embedded.append(key, header.nRho, x0, header.dRho, buf);
     }
 
-    // 读取电子云密度表
+    // read electron density table
     grab(pot_file, header.nR, buf);
     if (!isEleTypesFilterEnabled() || isInFilterList(key)) {
       pot_loader->electron_density.append(key, header.nR, x0, header.dR, buf);
     }
   }
 
-  // 读取对势表
+  // read pair potential table
   int i, j;
   for (i = 0; i < file_ele_size; i++) {
     for (j = 0; j <= i; j++) {
