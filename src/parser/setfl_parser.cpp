@@ -8,17 +8,18 @@
 #include <cstdlib>
 #include <cstring>
 
-SetflParser::SetflParser(const std::string &filename) : EamBaseParse(filename) {}
+SetflParser::SetflParser(std::istream &pot_file) : EamBaseParse(pot_file) {}
 
 void SetflParser::parseHeader() {
   char tmp[4096];
   // file comments in the first 3 lines of the file.
-  fgets(tmp, sizeof(tmp), pot_file);
-  fgets(tmp, sizeof(tmp), pot_file);
-  fgets(tmp, sizeof(tmp), pot_file);
+  std::string str_tmp;
+  std::getline(pot_file, str_tmp);
+  std::getline(pot_file, str_tmp);
+  std::getline(pot_file, str_tmp);
 
   // line 4 in file
-  fgets(tmp, sizeof(tmp), pot_file);
+  pot_file.getline(&tmp[0], sizeof(tmp));
   sscanf(tmp, "%hu", &file_ele_size); // number of atom types
 
 
@@ -54,7 +55,7 @@ void SetflParser::parseHeader() {
   delete[] words;
   // line 5 in file
   // all types of atom use the same cutoff.
-  fgets(tmp, sizeof(tmp), pot_file);
+  pot_file.getline(&tmp[0], sizeof(tmp));
   sscanf(tmp, "%d %le %d %le %le", &header.nRho, &header.dRho, &header.nR, &header.dR, &header.cutoff);
 }
 
@@ -69,7 +70,6 @@ void SetflParser::parseBody(eam *eam_instance) {
 }
 
 void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
-
   char tmp[4096];
   const int bufSize = std::max(header.nRho, header.nR);
   double *buf = new double[bufSize];
@@ -78,7 +78,7 @@ void SetflParser::parseBodyEamAlloy(EamAlloyLoader *pot_loader) {
 
   // for each type of atom
   for (int i = 0; i < file_ele_size; i++) {
-    fgets(tmp, sizeof(tmp), pot_file);
+    pot_file.getline(&tmp[0], sizeof(tmp));
     atom_type::_type_atomic_no nAtomic;
     double mass, lat;    // mass, lattice const
     char latticeType[8]; // lattice type.
@@ -125,7 +125,7 @@ void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
   atom_type::_type_prop_key *prop_key_list = new atom_type::_type_prop_key[file_ele_size];
 
   for (int i = 0; i < file_ele_size; i++) {
-    fgets(tmp, sizeof(tmp), pot_file);
+    pot_file.getline(&tmp[0], sizeof(tmp));
     atom_type::_type_atomic_no nAtomic;
     double mass, lat;    // mass, lattice const
     char latticeType[8]; // lattice type.
