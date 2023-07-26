@@ -16,8 +16,11 @@ class OneWayEam : public InterpolationObject {};
 typedef InterpolationLists<atom_type::_type_prop_key, OneWayEam> _type_one_way_map;
 
 /**
- * electron charge density and embedded energy items for N elements.
  * @deprecated
+ * InterpolationLists and OneWayEamList is deprecated now.
+ * We now use @class EamPotTableLoaderApi instead.
+ *
+ * electron charge density and embedded energy items for N elements.
  */
 class OneWayEamList {
 public:

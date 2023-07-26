@@ -41,8 +41,11 @@ typedef KeyDb _type_two_way_key;
 typedef InterpolationLists<_type_two_way_key, EamPhi> _type_two_way_map;
 
 /**
- *  @deprecated
- *  pair potentials for N elements
+ * @deprecated
+ * InterpolationLists and EamPhiList is deprecated.
+ * We now use @class EamPotTableLoaderApi instead.
+ *
+ * pair potentials for N elements
  */
 class EamPhiList {
 public:

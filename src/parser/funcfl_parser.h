@@ -8,9 +8,12 @@
 
 #include "parser.h"
 
+/**
+ * @deprecated FuncflParser is not maintained any more.
+ */
 class FuncflParser : public Parser {
 public:
-  explicit FuncflParser(const std::string filename);
+  explicit FuncflParser(std::istream &pot_file);
 
   void parseHeader() override;
 

@@ -6,17 +6,26 @@
 #ifndef POT_SETFL_PARSER_H
 #define POT_SETFL_PARSER_H
 
+#include <iostream>
+
 #include "eam_base_parser.hpp"
 #include "parser.h"
+
+struct EamPotFileHeader {
+  int nRho, nR;            // at line 5 in potential file header.
+  double dRho, dR, cutoff; // at line 5 in potential file header
+};
 
 // parser for parsing potential file of "setdl" format.
 class SetflParser : public EamBaseParse {
 public:
-  explicit SetflParser(const std::string &filename);
+  explicit SetflParser(std::istream &pot_file);
 
   void parseHeader() override;
 
   void parseBody(eam *eam_instance) override;
+
+  inline EamPotFileHeader getHeader() const { return header; }
 
 protected:
   // parse eam file of "eam/alloy" style.
@@ -26,8 +35,7 @@ protected:
   void parseBodyEamFs(EamFsLoader *pot_loader);
 
 private:
-  int nRho, nR;            // at line 5 in header.
-  double dRho, dR, cutoff; // at line 5 in header
+  EamPotFileHeader header;
 };
 
 #endif // POT_SETFL_PARSER_H

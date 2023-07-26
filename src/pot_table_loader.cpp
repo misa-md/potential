@@ -60,6 +60,7 @@ std::vector<size_t> EamAlloyLoader::dataTableSizes(const std::vector<atom_type::
 
 EamFsLoader::EamFsLoader(const atom_type::_type_atom_types n_ele)
     : EamBaseLoader<FullConnLinearArray, LinearArray, PairLinearArray>(n_ele) {}
+
 std::vector<size_t> EamFsLoader::dataTableSizes(const std::vector<atom_type::_type_prop_key> &elements) {
   // todo:
   return std::vector<size_t>();

@@ -79,7 +79,7 @@ public:
    * @param dist2 the square of the distance between atom i and atom j.
    * @return the contribution to electron charge density from atom j.
    */
-  double chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2);
+  double chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) const;
 
   /**
    * compute the contribution to electron charge density from atom j of type {@var _atom_key2}
@@ -91,7 +91,7 @@ public:
    * @return the contribution to electron charge density
    */
   double chargeDensity(const atom_type::_type_prop_key _atom_key1, const atom_type::_type_prop_key _atom_key2,
-                       const double dist2);
+                       const double dist2) const;
 
   /**
    * compute derivative of embedded energy of atom of type {@var _atom_type},
@@ -100,7 +100,7 @@ public:
    * @param rho  electron charge density contributed by all its neighbor atoms.
    * @return derivative of embedded energy of this atom.
    */
-  double dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho);
+  double dEmbedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) const;
 
   /**
    * compute embedded energy of atom of type {@var _atom_type}
@@ -110,14 +110,16 @@ public:
    * correct it.
    * @return embedded energy of this atom.
    */
-  double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho);
+  double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho, const double max_rho) const;
+
+  double embedEnergy(const atom_type::_type_prop_key _atom_key, const double rho) const;
 
   /**
    * pair potential energy.
    * @return pair potential energy.
    */
   double pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
-                       const double dist2);
+                       const double dist2) const;
 
   /**
    * @deprecated
@@ -143,6 +145,8 @@ private:
       return nullptr;
     }
   }
+
+  static double embedEnergyImp(const InterpolationObject *embed, const double rho, const double max_rho);
 
 public:
   /**
