@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 include(config.cmake)
 
-project(${AppName})
+project(potential)
 
 include(config.cmake)
 include(dependency.cmake)
