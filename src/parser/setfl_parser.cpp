@@ -145,7 +145,7 @@ void SetflParser::parseBodyEamFs(EamFsLoader *pot_loader) {
     for (int j = 0; j < file_ele_size; j++) {
       grab(pot_file, header.nR, buf);
       atom_type::_type_prop_key key2 = j;
-      if (!isEleTypesFilterEnabled() || (isInFilterList(key) && isInFilterList(key))) {
+      if (!isEleTypesFilterEnabled() || (isInFilterList(key) && isInFilterList(key2))) {
         pot_loader->electron_density.push_back(header.nR, x0, header.dR, buf);
       }
     }

@@ -30,31 +30,30 @@ public:
     std::mt19937 rng(RAND_SEED);
     std::uniform_real_distribution<double> dist_f(0.0, 5.0);
 
-    // data buffer
-    double data_buff_emb[5000] = {};
-    double data_buff_elec[5000] = {};
-    for (int k = 0; k < 5000; k++) {
-      data_buff_emb[k] = k * dist_f(rng);
-      data_buff_elec[k] = k * dist_f(rng);
-    }
-
     auto eam_alloy_loader = dynamic_cast<EamAlloyLoader *>(_pot->eam_pot_loader);
     for (int i = 0; i < ELE_SIZE; i++) {
       const int key = i; // key is atom number
       prop_key_list[i] = key;
       x0_electron_density.push_back(key);
       x0_embedded.push_back(-key);
+      // data buffer
+      double data_buff_emb[5000] = {};
+      double data_buff_elec[5000] = {};
+      for (int k = 0; k < 5000; k++) {
+        data_buff_emb[k] = k * dist_f(rng);
+        data_buff_elec[k] = k * dist_f(rng);
+      }
       eam_alloy_loader->embedded.append(key, DATA_SIZE, -key, DELTA, data_buff_emb);
       eam_alloy_loader->electron_density.append(key, DATA_SIZE, key, DELTA, data_buff_elec);
     }
 
     int i, j;
     for (i = 0; i < ELE_SIZE; i++) {
-      double data_buff[5000] = {};
-      for (int k = 0; k < 5000; k++) {
-        data_buff[k] = k * dist_f(rng);
-      }
       for (j = 0; j <= i; j++) {
+        double data_buff[5000] = {};
+        for (int k = 0; k < 5000; k++) {
+          data_buff[k] = k * dist_f(rng);
+        }
         const double x0 = i * ELE_SIZE + j;
         x0_eam_phi.push_back(x0);
         eam_alloy_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], DATA_SIZE, x0, DELTA, data_buff);
@@ -97,37 +96,42 @@ public:
     std::mt19937 rng(RAND_SEED);
     std::uniform_real_distribution<double> dist_f(0.0, 5.0);
 
-    // data buffer
-    double data_buff_emb[5000] = {};
-    double data_buff_elec[5000] = {};
-    for (int k = 0; k < 5000; k++) {
-      data_buff_emb[k] = k * dist_f(rng);
-      data_buff_elec[k] = k * dist_f(rng);
-    }
-
     auto eam_fs_loader = dynamic_cast<EamFsLoader *>(_pot->eam_pot_loader);
     for (int i = 0; i < ELE_SIZE; i++) {
       const int key = i; // key is atom number
       prop_key_list[i] = key;
       x0_embedded.push_back(key);
+
+      // data buffer
+      double data_buff_emb[5000] = {};
+      for (int k = 0; k < 5000; k++) {
+        data_buff_emb[k] = k * dist_f(rng);
+      }
       eam_fs_loader->embedded.append(key, DATA_SIZE, key, DELTA, data_buff_emb);
+
       // add electron density potential
       for (int j = 0; j < ELE_SIZE; j++) {
         const double x0_ele = -(i * ELE_SIZE + j);
         x0_electron_density.push_back(x0_ele);
+
+        double data_buff_elec[5000] = {};
+        for (int k = 0; k < 5000; k++) {
+          data_buff_emb[k] = k * dist_f(rng);
+          data_buff_elec[k] = k * dist_f(rng);
+        }
         eam_fs_loader->electron_density.append(key, DATA_SIZE, x0_ele, DELTA, data_buff_elec);
       }
     }
 
     int i, j;
     for (i = 0; i < ELE_SIZE; i++) {
-      double data_buff[5000] = {};
-      for (int k = 0; k < 5000; k++) {
-        data_buff[k] = k * dist_f(rng);
-      }
       for (j = 0; j <= i; j++) {
         const double x0 = i * ELE_SIZE + j;
         x0_eam_phi.push_back(x0);
+        double data_buff[5000] = {};
+        for (int k = 0; k < 5000; k++) {
+          data_buff[k] = k * dist_f(rng);
+        }
         eam_fs_loader->eam_phi.append(prop_key_list[i], prop_key_list[j], DATA_SIZE, x0, DELTA, data_buff);
       }
     }
