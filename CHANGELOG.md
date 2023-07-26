@@ -2,6 +2,61 @@
 ## [Unreleased]
 
 
+<a name="v0.4.0"></a>
+## [v0.4.0] - 2023-07-26
+### Build
+- **cmake:** correct cmake project name to 'potential'
+- **pkg:** bump googletest to from v1.10.0 to v1.12.0
+- **pkg:** bump google/benchmark to v1.8.2 to fix werror error in clang
+
+### Chore
+- mark class ArrayMap, InterpolationLists, OneWayEamList and EamPhiList as deprecated
+- **parser:** translate comments: use english and remove chinese in comments
+
+### Docs
+- **changelog:** add changelog for v0.4.0
+
+### Feat
+- **eam:** make eam computation apis as const
+- **eam:** add api `eam::embedEnergy` without `max_rho` parameter: auto-detect max_rho from table
+- **interpolation:** support spline calculation and potential table from a non-zero point as start
+- **parser:** change to use C++ stream to parse eam potential file
+- **parser:** add member function `SetflParser::getHeader` for getting header of eam potential file
+
+### Fix
+- **compile:** fix building warnings
+- **parser:** fix incorrect element filtering in eam/fs parsing when element type filter is enabled
+
+### Merge
+- Merge pull request [#14](https://github.com/MISA-MD/potential/issues/14) from misa-md/dev
+- Merge pull request [#11](https://github.com/MISA-MD/potential/issues/11) from misa-md/better-code-style-and-warning-fixing
+- **eam:** Merge pull request [#9](https://github.com/MISA-MD/potential/issues/9) from misa-md/test-eam-fs-potential-apis
+- **eam:** Merge pull request [#7](https://github.com/MISA-MD/potential/issues/7) from misa-md/feature-embed-energy-rhomax-api-redesign
+- **eam:** Merge pull request [#6](https://github.com/MISA-MD/potential/issues/6) from misa-md/test-eam-alloy-potential-apis
+- **parser:** Merge pull request [#13](https://github.com/MISA-MD/potential/issues/13) from misa-md/test-parser-api-setFilterEleTypes
+- **parser:** Merge pull request [#12](https://github.com/MISA-MD/potential/issues/12) from misa-md/feature-potential-parser-api-iostream
+- **parser:** Merge pull request [#8](https://github.com/MISA-MD/potential/issues/8) from misa-md/feature-parser-getHeader-member
+- **pkg:** Merge pull request [#10](https://github.com/MISA-MD/potential/issues/10) from misa-md/bump-dependency-libs
+
+### Style
+- code formatting and typo fixing
+
+### Test
+- **eam:** add linear potential table generation fixup and eam api tests for eam/fs potential
+- **eam:** add tests for `chargeDensity` and `pairPotential` of eam/alloy using linear table fixup
+- **eam:** add tests for api `embedEnergy` of eam/alloy based on the linear potential table fixup
+- **eam:** add linear potential table generation fixup
+- **parser:** unit tests of parser api `setFilterEleTypes` for both eam/fs and eam/alloy potential
+- **parser:** test eam/fs potential file parser by comparing parsed results with generated ones
+- **parser:** add eam/alloy potential file parser tests: compare potential table one by one
+
+### BREAKING CHANGE
+
+1. Api `Parser::done`, `FuncflParser::done` and `SetflParser::done` is removed.
+user should close the opened potential file manually. 2. Pass `std::istream`, instead of file path,
+for class `SetflParser/FuncflParser` instantiation.
+
+
 <a name="v0.3.0"></a>
 ## [v0.3.0] - 2023-02-28
 ### Chore
@@ -10,6 +65,7 @@
 - **pot-loader:** add comments for member functions in classs `EamPotTableLoaderApi`
 
 ### Docs
+- **changelog:** add changelog for v0.3.0
 - **readme:** correct cmake option in building section of README.md
 
 ### Feat
@@ -188,7 +244,8 @@ spilt param df_sum to df_from and df_to.
 - **interpolation:** add tests for interpolation sync in class InterpolationLists.
 
 
-[Unreleased]: https://github.com/MISA-MD/potential/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/MISA-MD/potential/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/MISA-MD/potential/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/MISA-MD/potential/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/MISA-MD/potential/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/MISA-MD/potential/compare/v0.1.0-beta...v0.1.0
