@@ -9,6 +9,7 @@ set(HEADER_FILES
         eam_one_way.h
         eam_phi.h
         eam.h
+        eam_c_api.h
         container/interpolation_lists.hpp
         container/interpolation_object.h
         types.h
@@ -25,6 +26,7 @@ set(SOURCE_FILES
         eam_one_way.cpp
         eam_phi.cpp
         eam.cpp
+        eam_c_api.cpp
         types.cpp
         container/interpolation_object.cpp
         parser/funcfl_parser.cpp
