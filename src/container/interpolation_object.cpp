@@ -33,12 +33,14 @@ void InterpolationObject::bcastInterpolationObject(const int root, const int ran
     int n;
     double x0;
     double inv_dx;
+    double max_val;
   } interpolation_data_pack;
   interpolation_data_pack temp;
   if (rank == root) {
     temp.n = this->n;
     temp.x0 = this->x0;
     temp.inv_dx = this->invDx;
+    temp.max_val = max_val;
   }
 
   MPI_Bcast(&temp, sizeof(interpolation_data_pack), MPI_BYTE, root, comm);
@@ -47,6 +49,7 @@ void InterpolationObject::bcastInterpolationObject(const int root, const int ran
     this->n = temp.n;
     this->x0 = temp.x0;
     this->invDx = temp.inv_dx;
+    this->max_val = temp.max_val;
     values = new double[n + 1];
   }
 

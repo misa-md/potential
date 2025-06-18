@@ -19,8 +19,10 @@ eam *eam::newInstance(const int eam_style, atom_type::_type_atom_types n_ele_roo
 eam::eam(const atom_type::_type_atom_types n_ele, const int eam_style) : _n_eles(n_ele), eam_style(eam_style) {
   if (eam_style == EAM_STYLE_ALLOY) {
     eam_pot_loader = new EamAlloyLoader(n_ele);
+    alloy_loader = dynamic_cast<EamAlloyLoader *>(eam_pot_loader);
   } else if (eam_style == EAM_STYLE_FS) {
     eam_pot_loader = new EamFsLoader(n_ele);
+    fs_loader = dynamic_cast<EamFsLoader *>(eam_pot_loader);
   } else {
     printf("The eam style `%d` is not implemented\n", eam_style);
   }
@@ -40,14 +42,25 @@ eam::~eam() {
 
 void eam::setlatticeType(char *_latticeType) { strcpy(latticeType, _latticeType); }
 
+template <int EAM_STYLE>
 double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
                     const double dist2, const double df_from, const double df_to) {
   double fpair;
   double phi, phip, psip, z2, z2p;
 
-  const InterpolationObject *phi_spline = eam_pot_loader->loadEamPhi(key_from, key_to);
-  const InterpolationObject *electron_spline_from = ele_charge_load_wrapper(key_from, key_to);
-  const InterpolationObject *electron_spline_to = ele_charge_load_wrapper(key_to, key_from);
+  InterpolationObject *phi_spline = nullptr;
+  InterpolationObject *electron_spline_from = nullptr;
+  InterpolationObject *electron_spline_to = nullptr;
+
+  if (EAM_STYLE == EAM_STYLE_ALLOY) {
+    phi_spline = (alloy_loader)->loadEamPhi(key_from, key_to);
+    electron_spline_from = alloy_loader->loadElectronDensity(key_from);
+    electron_spline_to = alloy_loader->loadElectronDensity(key_to);
+  } else if (EAM_STYLE == EAM_STYLE_FS) {
+    phi_spline = (fs_loader)->loadEamPhi(key_from, key_to);
+    electron_spline_from = fs_loader->loadElectronDensity(key_from, key_to);
+    electron_spline_to = fs_loader->loadElectronDensity(key_to, key_from);
+  }
 
   const double r = sqrt(dist2);
   const SplineData phi_s = phi_spline->findSpline(r);
@@ -73,8 +86,16 @@ double eam::toForce(const atom_type::_type_prop_key key_from, const atom_type::_
   return fpair;
 }
 
+template <int EAM_STYLE>
 double eam::chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) const {
-  const InterpolationObject *electron_spline = eam_pot_loader->loadElectronDensity(_atom_key);
+  InterpolationObject *electron_spline = nullptr;
+  if (EAM_STYLE == EAM_STYLE_ALLOY) {
+    electron_spline = alloy_loader->loadElectronDensity(_atom_key);
+  } else if (EAM_STYLE == EAM_STYLE_FS) {
+    electron_spline = fs_loader->loadElectronDensity(_atom_key);
+  }
+
+  //  const InterpolationObject *electron_spline = eam_pot_loader->loadElectronDensity(_atom_key);
   const double r = sqrt(dist2);
   const SplineData s = electron_spline->findSpline(r);
   return ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6];
@@ -115,12 +136,31 @@ double eam::embedEnergyImp(const InterpolationObject *embed, const double rho, c
   return phi;
 }
 
+template <int EAM_STYLE>
 double eam::pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
                           const double dist2) const {
   const InterpolationObject *phi_spline = eam_pot_loader->loadEamPhi(key_from, key_to);
   const double r = sqrt(dist2);
-
   const SplineData s = phi_spline->findSpline(r);
   const double phi_r = ((s.spline[3] * s.p + s.spline[4]) * s.p + s.spline[5]) * s.p + s.spline[6]; // pair_pot * r
   return phi_r / r;
 }
+
+template double eam::toForce<EAM_STYLE_ALLOY>(const atom_type::_type_prop_key key_from,
+                                              const atom_type::_type_prop_key key_to, const double dist2,
+                                              const double df_from, const double df_to);
+
+template double eam::toForce<EAM_STYLE_FS>(const atom_type::_type_prop_key key_from,
+                                           const atom_type::_type_prop_key key_to, const double dist2,
+                                           const double df_from, const double df_to);
+
+template double eam::chargeDensity<EAM_STYLE_ALLOY>(const atom_type::_type_prop_key _atom_key,
+                                                    const double dist2) const;
+
+template double eam::chargeDensity<EAM_STYLE_FS>(const atom_type::_type_prop_key _atom_key, const double dist2) const;
+
+template double eam::pairPotential<EAM_STYLE_ALLOY>(const atom_type::_type_prop_key key_from,
+                                                    const atom_type::_type_prop_key key_to, const double dist2) const;
+
+template double eam::pairPotential<EAM_STYLE_FS>(const atom_type::_type_prop_key key_from,
+                                                 const atom_type::_type_prop_key key_to, const double dist2) const;

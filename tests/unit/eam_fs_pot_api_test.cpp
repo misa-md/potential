@@ -72,15 +72,15 @@ TEST_F(EamPotFsLinearTestFixture, test_eam_fs_pair_phi_calc) {
     constexpr int key1 = 0;
     constexpr int key2 = 0;
     const double max_x = max_x_for_pair_phi(key1, key2);
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 5.0) * (max_x / 5.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 5.0) * (max_x / 5.0)),
                      expected_phi(max_x / 5.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 16.0) * (max_x / 16.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 16.0) * (max_x / 16.0)),
                      expected_phi(max_x / 16.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 32.0) * (max_x / 32.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 32.0) * (max_x / 32.0)),
                      expected_phi(max_x / 32.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 2.0) * (max_x / 2.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 2.0) * (max_x / 2.0)),
                      expected_phi(max_x / 2.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (2.0 * max_x / 3.0) * (2.0 * max_x / 3.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (2.0 * max_x / 3.0) * (2.0 * max_x / 3.0)),
                      expected_phi(2.0 * max_x / 3.0, key1, key2));
   }
 
@@ -89,15 +89,15 @@ TEST_F(EamPotFsLinearTestFixture, test_eam_fs_pair_phi_calc) {
     constexpr int key1 = 1;
     constexpr int key2 = 2;
     const double max_x = max_x_for_pair_phi(key1, key2);
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 5.0) * (max_x / 5.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 5.0) * (max_x / 5.0)),
                      expected_phi(max_x / 5.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 16.0) * (max_x / 16.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 16.0) * (max_x / 16.0)),
                      expected_phi(max_x / 16.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 32.0) * (max_x / 32.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 32.0) * (max_x / 32.0)),
                      expected_phi(max_x / 32.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (max_x / 2.0) * (max_x / 2.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (max_x / 2.0) * (max_x / 2.0)),
                      expected_phi(max_x / 2.0, key1, key2));
-    EXPECT_DOUBLE_EQ(_pot->pairPotential(key1, key2, (2.0 * max_x / 3.0) * (2.0 * max_x / 3.0)),
+    EXPECT_DOUBLE_EQ(_pot->pairPotential<EAM_STYLE_FS>(key1, key2, (2.0 * max_x / 3.0) * (2.0 * max_x / 3.0)),
                      expected_phi(2.0 * max_x / 3.0, key1, key2));
   }
 }
