@@ -2,11 +2,11 @@
 // Created by genshen on 2023/12/21.
 //
 
-#include <eam.h>
 #include <fstream>
 #include <iostream>
 #include <string>
 
+#include "eam.h"
 #include "eam_c_api.h"
 #include "parser/setfl_parser.h"
 
@@ -66,12 +66,12 @@ double eam_pot_embed_energy(const tp_pot_atom_type _atom_key, const double rho) 
 }
 
 double eam_pot_pair_potential(const tp_pot_atom_type key_from, const tp_pot_atom_type key_to, const double dist2) {
-  return _pot->pairPotential(key_from, key_to, dist2);
+  return _pot->pairPotential<EAM_STYLE_ALLOY>(key_from, key_to, dist2);
 }
 
 double eam_pot_to_force(const tp_pot_atom_type key_from, const tp_pot_atom_type key_to, const double dist2,
                         const double df_from, const double df_to) {
-  return _pot->toForce(key_from, key_to, dist2, df_from, df_to);
+  return _pot->toForce<EAM_STYLE_ALLOY>(key_from, key_to, dist2, df_from, df_to);
 }
 
 tp_pot_atom_types_num eam_pot_get_n_eles() { return _pot->geEles(); }

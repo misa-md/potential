@@ -62,6 +62,7 @@ public:
 
   /**
    * Calculate force of two atoms.
+   * @tparam EAM_STYLE the eam style can be EAM_STYLE_ALLOY or EAM_STYLE_FS.
    * @param key_from type of the center atom
    * @param key_to type of the neighbor atom
    * @param dist2 distance^2 of the two atoms.
@@ -69,6 +70,7 @@ public:
    * @param df_to df of the neighbor atom
    * @return the force of the two atoms.
    */
+  template <int EAM_STYLE>
   double toForce(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to, const double dist2,
                  const double df_from, const double df_to);
 
@@ -79,6 +81,7 @@ public:
    * @param dist2 the square of the distance between atom i and atom j.
    * @return the contribution to electron charge density from atom j.
    */
+  template <int EAM_STYLE = EAM_STYLE_ALLOY>
   double chargeDensity(const atom_type::_type_prop_key _atom_key, const double dist2) const;
 
   /**
@@ -116,8 +119,10 @@ public:
 
   /**
    * pair potential energy.
+   * @tparam EAM_STYLE the eam style can be EAM_STYLE_ALLOY or EAM_STYLE_FS.
    * @return pair potential energy.
    */
+  template <int EAM_STYLE>
   double pairPotential(const atom_type::_type_prop_key key_from, const atom_type::_type_prop_key key_to,
                        const double dist2) const;
 
@@ -134,11 +139,12 @@ public:
   inline atom_type::_type_atom_types geEles() const { return _n_eles; }
 
 private:
+  template <int EAM_STYLE>
   inline InterpolationObject *ele_charge_load_wrapper(const atom_type::_type_prop_key _atom_key_me,
                                                       const atom_type::_type_prop_key _atom_key_nei) {
-    if (eam_style == EAM_STYLE_ALLOY) {
+    if (EAM_STYLE == EAM_STYLE_ALLOY) {
       return eam_pot_loader->loadElectronDensity(_atom_key_me);
-    } else if (eam_style == EAM_STYLE_FS) {
+    } else if (EAM_STYLE == EAM_STYLE_FS) {
       return eam_pot_loader->loadElectronDensity(_atom_key_me, _atom_key_nei);
     } else {
       printf("error: unspecified eam style.\n");
@@ -153,6 +159,9 @@ public:
    * different eam potential style: eam/alloy, eam/fs.
    */
   EamPotTableLoaderApi *eam_pot_loader;
+
+  EamAlloyLoader *alloy_loader = nullptr;
+  EamFsLoader *fs_loader = nullptr;
 
 private:
   const atom_type::_type_atom_types _n_eles; // the count of element types, which is initialized as 0.
